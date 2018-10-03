@@ -1,0 +1,14 @@
+# windows:
+# cmake -G "MSYS Makefiles" .
+
+cmake_minimum_required(VERSION 3.1.0)
+project(Kalyra)
+
+set(CMAKE_SOURCE_DIR src)
+set(CMAKE_CXX_STANDARD 11)
+set(SOURCES src/main.cc src/firmwareRelease.cc src/packageRecipe.cc lib/cJSON/cJSON.c)
+
+include_directories(lib)
+
+
+add_executable(firmware-factory ${SOURCES})
