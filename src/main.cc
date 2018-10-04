@@ -3,6 +3,13 @@
 #include <cstdlib>
 #include <algorithm>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
+#include<sys/stat.h>
+#include<sys/types.h>
+
 // script generator
 #include <iostream>
 #include <fstream>  
@@ -171,8 +178,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    //DBG cout << cJSON_Print(manifest);
-
     const auto product = manifestGetValue(manifest, TAG_PRODUCT);
     const auto release = manifestGetValue(manifest, TAG_RELEASE);
     const auto stage = manifestGetValue(manifest, TAG_STAGE);
@@ -200,20 +205,26 @@ int main(int argc, char *argv[])
 
     cout << "All good." << endl;
 
-
     cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
         << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl << endl;
-/*  DBG
-    cout << "using: " << endl;
-    for (auto& entry : fwrt->recipes) {
-        cout << entry->getName() << " url: " << entry->getUrl() << " rev=" << entry->getRev() << endl;
-        cout << "commands:" << endl;
-        for (auto& t : entry->getCmdList())
-        	cout << t << endl;
-    }
-*/
 
     cout << "Generating build scripts...." << endl;
+
+#if defined(_WIN32) || defined(_WIN64)
+    if (!CreateDirectory(BUILDDIR, NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+        cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
+        return EXIT_FAILURE;
+    }
+#else
+    struct stat st;
+    if (stat(BUILDDIR, &st) != 0)
+    {
+        if (mkdir(BUILDDIR) == -1) {
+            cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
+            return EXIT_FAILURE;
+        }
+    }
+#endif
 
     scriptGenerator::fetch(fwrt);
 
