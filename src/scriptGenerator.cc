@@ -5,7 +5,6 @@
 
 using namespace std;
 
-constexpr auto BUILDDIR = "workdir";
 constexpr auto HOMEDIR = "HOME";
 
 
