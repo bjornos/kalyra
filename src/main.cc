@@ -23,6 +23,10 @@
 
 using namespace std;
 
+constexpr auto KALYRA_MAJOR = 0;
+constexpr auto KALYRA_MINOR = 2;
+constexpr auto KALYRA_SUB = 1;
+
 // for unit tests
 const char* manifestFile = 
 "{"
@@ -97,6 +101,7 @@ void manifestLoadHeader(const cJSON*& m, const string& manifest)
     m = cJSON_Parse(buffer.str().c_str());
 
     if (m == NULL) {
+        // TODO: add file exists check and report
         const char* errPtr = cJSON_GetErrorPtr();
         if (errPtr != NULL) {
             cout << "[DBG] Error before: " << errPtr << endl;
@@ -143,11 +148,11 @@ int main(int argc, char *argv[])
     bool fetchOnly = false;
     bool generateOnly = false;
 
-    cout <<  termcolor::white << "Kalyra Build System" << termcolor::reset << endl;
+    cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
-        cout << "-m, --manifest <name> : Projec manifest file (mandatory)." << endl;
+        cout << "-m, --manifest <name> : Project manifest file (mandatory)." << endl;
         cout << "-g                    : Generate build scripts only" << endl;
         cout << "-f                    : Fetch targets only" << endl;
         cout << "-c <target, ..>       : " << termcolor::red << "[Not Implemented Yet]" << termcolor::reset << " Compile/Assemble firmware only. No target means all." << endl;
@@ -169,7 +174,7 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("-g"))
         generateOnly = true;
 
-    cout << "Processing " << fileName << "..." << endl;
+    cout << "Processing " << fileName << "... ";
 
     try {
     	manifestLoadHeader(manifest, fileName);
@@ -203,10 +208,11 @@ int main(int argc, char *argv[])
 
     }
 
-    cout << "All good." << endl;
+    cout << "All good." << endl << endl;
 
     cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
-        << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl << endl;
+        << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
+    cout << "Release Path: " << termcolor::yellow << "<not yet implemented>" << termcolor::reset << endl << endl;
 
     cout << "Generating build scripts...." << endl;
 
