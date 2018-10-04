@@ -10,5 +10,5 @@ set(SOURCES src/main.cc src/firmwareRelease.cc src/packageRecipe.cc src/scriptGe
 
 include_directories(lib)
 
-
-add_executable(firmware-factory ${SOURCES})
+# Firmware Factory
+add_executable(ff ${SOURCES})
