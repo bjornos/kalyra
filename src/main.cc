@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
     struct stat st;
     if (stat(BUILDDIR, &st) != 0)
     {
-        if (mkdir(BUILDDIR) == -1) {
+        if (mkdir(BUILDDIR, 0755) == -1) {
             cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
             return EXIT_FAILURE;
         }
