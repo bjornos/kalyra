@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <algorithm>
+
 // script generator
 #include <iostream>
 #include <fstream>  
@@ -11,6 +12,7 @@
 
 #include "packageRecipe.hh"
 #include "firmwareRelease.hh"
+#include "scriptGenerator.hh"
 
 using namespace std;
 
@@ -127,17 +129,21 @@ void manifestLoadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifes
     }
 }
 
-
 int main(int argc, char *argv[])
 {
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
+    bool fetchOnly = false;
+    bool generateOnly = false;
 
     cout <<  termcolor::white << "Kalyra Build System" << termcolor::reset << endl;
 
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
-    	cout << "-m, --manifest <name> : Projec manifest file." << endl;
+        cout << "-m, --manifest <name> : Projec manifest file (mandatory)." << endl;
+        cout << "-g                    : Generate build scripts only" << endl;
+        cout << "-f                    : Fetch targets only" << endl;
+        cout << "-c <target, ..>       : " << termcolor::red << "[Not Implemented Yet]" << termcolor::reset << " Compile/Assemble firmware only. No target means all." << endl;
     	return EXIT_SUCCESS;
     }
 
@@ -149,6 +155,12 @@ int main(int argc, char *argv[])
     	    return EXIT_FAILURE;
         }
     }
+
+    if (cmdOptions.cmdOptionExists("-f"))
+        fetchOnly = true;
+
+    if (cmdOptions.cmdOptionExists("-g"))
+        generateOnly = true;
 
     cout << "Processing " << fileName << "..." << endl;
 
@@ -191,59 +203,33 @@ int main(int argc, char *argv[])
 
     cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
         << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl << endl;
-
+/*  DBG
     cout << "using: " << endl;
     for (auto& entry : fwrt->recipes) {
         cout << entry->getName() << " url: " << entry->getUrl() << " rev=" << entry->getRev() << endl;
-        /*cout << "commands:" << endl;
+        cout << "commands:" << endl;
         for (auto& t : entry->getCmdList())
-        	cout << t << endl; */
+        	cout << t << endl;
     }
+*/
 
+    cout << "Generating build scripts...." << endl;
 
+    scriptGenerator::fetch(fwrt);
 
+    scriptGenerator::build(fwrt);
 
-    cout << "Building Release...." << endl;
+    if (generateOnly)
+        return EXIT_SUCCESS;
 
-    std::ofstream outfile ("fetch_targets.sh", std::ios_base::binary | std::ios_base::out);
+    std::system(SCRIPT_FETCH_CMD);
 
-    outfile << "#!/bin/sh" << std::endl;
-    outfile << "mkdir -p workdir\n";// << endl;;
-    outfile << "cd workdir" << std::endl;
+    if (fetchOnly)
+        return EXIT_SUCCESS;
 
-    for (auto& entry : fwrt->recipes) {
-        outfile << "echo Fetching " << entry->getName() << std::endl;
-        outfile << "git clone " << entry->getUrl();
-        if (!entry->getRev().empty())
-            outfile << " -b " << entry->getRev();
-        outfile << std::endl;
-
-    }
-
-    outfile.close();
-
-    std::system("bash fetch_targets.sh");
-
-    std::ofstream outfile2("build_targets.sh", std::ios_base::binary | std::ios_base::out);
-
-    outfile2 << "#!/bin/sh" << std::endl;
-    outfile2 << "mkdir -p workdir\n";// << endl;;
-    outfile2 << "cd workdir" << std::endl;
-
-    for (auto& entry : fwrt->recipes) {
-        outfile2 << "echo build " << entry->getName() << std::endl;
-        outfile2 << "cd " << entry->getRoot() << std::endl;
-        for (auto& t : entry->getCmdList())
-        	outfile2 << t << endl;
-        outfile2 << "cd .." << std::endl;
-    }
-    outfile2.close();
-
-    std::system("bash build_targets.sh");
-
+    std::system(SCRIPT_BUILD_CMD);
 
     //cout << "Copying release to server..." << endl;
-
 
 	return EXIT_SUCCESS;
 }
