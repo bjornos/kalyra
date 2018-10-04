@@ -8,7 +8,7 @@
 using namespace std;
 
 constexpr auto RECIPE_DIRECTORY = "recipes/";
-constexpr auto RECIPE_SUFFIX = ".bp";
+constexpr auto RECIPE_SUFFIX = ".rp";
 
 packageRecipe::packageRecipe(string name, string revisionOverride, string targetOverride) :
     name(name),
