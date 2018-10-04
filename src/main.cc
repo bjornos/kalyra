@@ -213,7 +213,11 @@ int main(int argc, char *argv[])
 
     for (auto& entry : fwrt->recipes) {
         outfile << "echo Fetching " << entry->getName() << std::endl;
-        outfile << "git clone " << entry->getUrl() << " -b " << entry->getRev() << std::endl;
+        outfile << "git clone " << entry->getUrl();
+        if (!entry->getRev().empty())
+            outfile << " -b " << entry->getRev();
+        outfile << std::endl;
+
     }
 
     outfile.close();
