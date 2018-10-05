@@ -76,7 +76,24 @@ class InputParser{
         std::vector <std::string> tokens;
 };
 
-
+int createDir(const string& dir)
+{
+//FIXME: look into c++17 for cross platform solution
+#if defined(_WIN32) || defined(_WIN64)
+    if (!CreateDirectory(dir, NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+        return -1;
+    } else {
+        return 0;
+    }
+#else
+    struct stat st;
+    if (stat(dir.c_str(), &st)) {
+        return mkdir(dir.c_str(), 0755);
+    } else {
+        return 1;
+    }
+#endif
+}
 
 const cJSON* manifestGetValue(const cJSON* recipe, string tag)
 {
@@ -268,21 +285,10 @@ int main(int argc, char *argv[])
 
     cout << "Generating build scripts...." << endl;
 
-#if defined(_WIN32) || defined(_WIN64)
-    if (!CreateDirectory(BUILDDIR, NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+    if (createDir(BUILDDIR) == -1) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
-#else
-    struct stat st;
-    if (stat(BUILDDIR, &st) != 0)
-    {
-        if (mkdir(BUILDDIR, 0755) == -1) {
-            cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
-            return EXIT_FAILURE;
-        }
-    }
-#endif
 
     scriptGenerator::fetch(fwrt);
 
@@ -302,21 +308,11 @@ int main(int argc, char *argv[])
         std::system(SCRIPT_BUILD_CMD);
 
     cout << "Copying release to server..." << endl;
-#if defined(_WIN32) || defined(_WIN64)
-    if (!CreateDirectory(fwrt->releaseComponents->releasePath.c_str(), NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+
+    if (createDir(fwrt->releaseComponents->releasePath) == -1) {
         cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
-#else
-    struct stat st;
-    if (stat(BUILDDIR, &st) != 0)
-    {
-        if (mkdir(fwrt->releaseComponents->releasePath, 0755) == -1) {
-            cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
-            return EXIT_FAILURE;
-        }
-    }
-#endif
 
     std::system(SCRIPT_RELEASE_CMD);
 
