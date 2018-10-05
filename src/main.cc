@@ -5,14 +5,10 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
-
-#include<sys/stat.h>
-#include<sys/types.h>
-
-// script generator
-#include <iostream>
-#include <fstream>  
 
 #include "cJSON/cJSON.h"
 #include "termcolor/termcolor.hpp"
@@ -42,12 +38,6 @@ constexpr auto TAG_STAGE = "stage";
 constexpr auto TAG_BUILD = "build";
 constexpr auto TAG_PACKAGES = "packages";
 
-enum {
-	ALPHA,
-	BETA,
-	RC,
-	FINAL
-} RELEASE_STAGE;
 
 // this class was found on stackoverflow
 // https://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
@@ -120,7 +110,7 @@ void manifestLoadHeader(const cJSON*& m, const string& manifest)
 
     if (m == NULL) {
         // TODO: add file exists check and report
-        const char* errPtr = cJSON_GetErrorPtr();
+        auto errPtr = cJSON_GetErrorPtr();
         if (errPtr != NULL) {
             cout << "[DBG] Error before: " << errPtr << endl;
         }
@@ -131,17 +121,16 @@ void manifestLoadHeader(const cJSON*& m, const string& manifest)
 void manifestLoadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
 {
     const cJSON* package;
-    const cJSON* packages;
 
-    packages = cJSON_GetObjectItemCaseSensitive(manifest, "packages");
+    auto packages = cJSON_GetObjectItemCaseSensitive(manifest, "packages");
     cJSON_ArrayForEach(package, packages)
     {
         string revOverride("");
         string targetOverride("");
 
-        cJSON *recipe = cJSON_GetObjectItemCaseSensitive(package, "name");
-        cJSON *rev = cJSON_GetObjectItemCaseSensitive(package, "revision");
-        cJSON *target = cJSON_GetObjectItemCaseSensitive(package, "target");
+        auto recipe = cJSON_GetObjectItemCaseSensitive(package, "name");
+        auto rev = cJSON_GetObjectItemCaseSensitive(package, "revision");
+        auto target = cJSON_GetObjectItemCaseSensitive(package, "target");
 
         if (!cJSON_IsString(recipe) || (recipe->valuestring == NULL)) {
             throw std::invalid_argument("Error parsing targets.");
@@ -208,9 +197,9 @@ int main(int argc, char *argv[])
 {
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
-    bool fetchOnly = false;
-    bool generateOnly = false;
-    bool releaseOnly = false;
+    auto fetchOnly = false;
+    auto generateOnly = false;
+    auto releaseOnly = false;
 
     cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
