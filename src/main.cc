@@ -18,6 +18,7 @@
 #include "termcolor/termcolor.hpp"
 
 #include "packageRecipe.hh"
+#include "releaseComponent.hh"
 #include "firmwareRelease.hh"
 #include "scriptGenerator.hh"
 
@@ -141,12 +142,58 @@ void manifestLoadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifes
     }
 }
 
+void manifestLoadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
+{
+    const cJSON* component;
+    vector<string> preCommands;
+    vector<string> postCommands;
+    vector<string> releaseFiles;
+
+    auto components = cJSON_GetObjectItemCaseSensitive(manifest, "release-components");
+
+    const auto path = manifestGetValue(components, "release-path");
+
+    auto section = cJSON_GetObjectItemCaseSensitive(components, "pre-commands");
+    if (section != NULL) {
+        cJSON_ArrayForEach(component, section)
+        {
+            preCommands.emplace_back(component->valuestring);
+        }
+    }
+
+    section = cJSON_GetObjectItemCaseSensitive(components, "post-commands");
+    if (section != NULL) {
+        cJSON_ArrayForEach(component, section)
+        {
+            postCommands.emplace_back(component->valuestring);
+        }
+    }
+
+    for (auto& target : fwrt->recipes) {
+        const cJSON* releaseFile;
+        auto t = cJSON_GetObjectItem(components, target->getName().c_str());
+        if (t != NULL) {
+            cJSON_ArrayForEach(releaseFile, t)
+            {
+                 // FIXME!!! windows make things complicated with their silly approach of \
+                //releaseFiles.emplace_back(target->getRoot() +"/" + releaseFile->valuestring);
+                releaseFiles.emplace_back(target->getRoot() +"\\" + releaseFile->valuestring);
+            }
+        }
+    }
+
+    auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles, path->valuestring)));
+
+    fwrt->releaseComponents = move(rc);
+}
+
 int main(int argc, char *argv[])
 {
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
     bool fetchOnly = false;
     bool generateOnly = false;
+    bool releaseOnly = false;
 
     cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
@@ -173,6 +220,9 @@ int main(int argc, char *argv[])
 
     if (cmdOptions.cmdOptionExists("-g"))
         generateOnly = true;
+
+    if (cmdOptions.cmdOptionExists("-r"))
+        releaseOnly = true;
 
     cout << "Processing " << fileName << "... ";
 
@@ -208,11 +258,13 @@ int main(int argc, char *argv[])
 
     }
 
+    manifestLoadComponents(fwrt, manifest);
+
     cout << "All good." << endl << endl;
 
     cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
         << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
-    cout << "Release Path: " << termcolor::yellow << "<not yet implemented>" << termcolor::reset << endl << endl;
+    cout << "Release Path: " << termcolor::yellow << fwrt->releaseComponents->releasePath << termcolor::reset << endl << endl;
 
     cout << "Generating build scripts...." << endl;
 
@@ -236,6 +288,8 @@ int main(int argc, char *argv[])
 
     scriptGenerator::build(fwrt);
 
+    scriptGenerator::release(fwrt);
+
     if (generateOnly)
         return EXIT_SUCCESS;
 
@@ -244,9 +298,27 @@ int main(int argc, char *argv[])
     if (fetchOnly)
         return EXIT_SUCCESS;
 
-    std::system(SCRIPT_BUILD_CMD);
+    if (!releaseOnly)
+        std::system(SCRIPT_BUILD_CMD);
 
-    //cout << "Copying release to server..." << endl;
+    cout << "Copying release to server..." << endl;
+#if defined(_WIN32) || defined(_WIN64)
+    if (!CreateDirectory(fwrt->releaseComponents->releasePath.c_str(), NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+        cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
+        return EXIT_FAILURE;
+    }
+#else
+    struct stat st;
+    if (stat(BUILDDIR, &st) != 0)
+    {
+        if (mkdir(fwrt->releaseComponents->releasePath, 0755) == -1) {
+            cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
+            return EXIT_FAILURE;
+        }
+    }
+#endif
+
+    std::system(SCRIPT_RELEASE_CMD);
 
 	return EXIT_SUCCESS;
 }

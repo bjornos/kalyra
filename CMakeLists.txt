@@ -6,7 +6,7 @@ project(Kalyra)
 
 set(CMAKE_SOURCE_DIR src)
 set(CMAKE_CXX_STANDARD 11)
-set(SOURCES src/main.cc src/firmwareRelease.cc src/packageRecipe.cc src/scriptGenerator.cc lib/cJSON/cJSON.c)
+set(SOURCES src/main.cc src/firmwareRelease.cc src/packageRecipe.cc src/scriptGenerator.cc src/releaseComponent.cc lib/cJSON/cJSON.c)
 
 include_directories(lib)
 

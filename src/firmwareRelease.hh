@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "packageRecipe.hh"
+#include "releaseComponent.hh"
 
 class firmwareRelease { 
 public:
@@ -16,6 +17,7 @@ public:
     std::string& getBuild();
 
     std::vector<std::unique_ptr<packageRecipe>> recipes;
+    std::unique_ptr<releaseComponent> releaseComponents;
 
 private:
     std::string name;

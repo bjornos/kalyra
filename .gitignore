@@ -5,3 +5,7 @@ cmake_install.cmake
 firmware-factory.exe
 libfirmware-factory.dll.a
 firmware-factory
+ff.exe
+libff.dll.a
+ff
+
