@@ -72,7 +72,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release)
         script << wat << "echo build " << entry->getName() << std::endl;
         script << wat << "cd " << entry->getRoot() << std::endl;
         for (auto& t : entry->getCmdList())
-            script << wat << t << endl;
+            script << wat << t << " || exit 4" << endl;
         script << wat << "cd .." << std::endl;
     }
 

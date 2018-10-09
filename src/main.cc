@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     auto releaseOnly = false;
 
     cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
-    cout <<  "Firmware Factory" << endl;
+    cout <<  "Firmware Factory: ";
 
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
@@ -182,13 +182,25 @@ int main(int argc, char *argv[])
     if (generateOnly)
         return EXIT_SUCCESS;
 
-    std::system(SCRIPT_FETCH_CMD);
+    int cmdResult;
+
+    cmdResult = std::system(SCRIPT_CMD_FETCH);
+    cout << "EXIT" << WEXITSTATUS(cmdResult) << endl;
+
+    if (WEXITSTATUS(cmdResult) == -1) {
+        cerr << "Error. Abort." << endl;
+        return EXIT_FAILURE;
+    }
 
     if (fetchOnly)
         return EXIT_SUCCESS;
 
-    if (!releaseOnly)
-        std::system(SCRIPT_BUILD_CMD);
+    cmdResult = std::system(SCRIPT_CMD_BUILD);
+    cout << "EXIT" << WEXITSTATUS(cmdResult) << endl;
+    if (WEXITSTATUS(cmdResult) == -1) {
+        cerr << "Error. Abort." << endl;
+        return EXIT_FAILURE;
+    }
 
     cout << "Copying release to server..." << endl;
 
@@ -197,7 +209,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    std::system(SCRIPT_RELEASE_CMD);
+    std::system(SCRIPT_CMD_RELEASE);
 
 	return EXIT_SUCCESS;
 }
