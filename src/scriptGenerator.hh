@@ -2,29 +2,32 @@
 
 #include "firmwareRelease.hh"
 
-/*#if defined(_WIN32) || defined(_WIN64)
-constexpr auto SCRIPT_FETCH = "fetch_targets.bat";
-constexpr auto SCRIPT_BUILD = "build_targets.bat";
-constexpr auto SCRIPT_FETCH_CMD = "cmd.exe fetch_targets.bat";
-constexpr auto SCRIPT_BUILD_CMD = "cmd.exe build_targets.bat";
-#else*/
+#if defined(_WIN32) || defined(_WIN64)
+#define PLT_SUFFIX "bat"
+#define PLT_SHELL "cmd  /C"
+#define PLT_SLASH "\\"
+#else
+#define PLT_SUFFIX "sh"
+#define PLT_SHELL "bash "
+#define PLT_SLASH "/"
+#endif
 
+#define FETCH "fetch_targets"
+#define BUILD "build_targets"
+#define RELEASE "release_targets"
 
-//#endif
+#define BUILDDIR "workdir"
+#define SCRIPT_FETCH BUILDDIR PLT_SLASH FETCH "." PLT_SUFFIX
+#define SCRIPT_BUILD BUILDDIR PLT_SLASH BUILD "." PLT_SUFFIX
+#define SCRIPT_RELEASE BUILDDIR PLT_SLASH RELEASE "." PLT_SUFFIX
+
+#define SCRIPT_FETCH_CMD PLT_SHELL " " SCRIPT_FETCH
+#define SCRIPT_BUILD_CMD PLT_SHELL " " SCRIPT_BUILD
+#define SCRIPT_RELEASE_CMD PLT_SHELL " " SCRIPT_RELEASE
 
 
 class scriptGenerator {
-
 public:
-    static constexpr auto BUILDDIR = "workdir";
-    static constexpr auto SCRIPT_FETCH = "workdir/fetch_targets.sh";
-    static constexpr auto SCRIPT_BUILD = "workdir/build_targets.sh";
-    static constexpr auto SCRIPT_RELEASE = "workdir/release_targets.bat";
-
-    static constexpr auto SCRIPT_FETCH_CMD = "bash workdir/fetch_targets.sh";
-    static constexpr auto SCRIPT_BUILD_CMD = "bash workdir/build_targets.sh";
-    static constexpr auto SCRIPT_RELEASE_CMD = "cmd  /C workdir\\release_targets.bat";
-
     scriptGenerator();
     ~scriptGenerator();
 

@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
     auto releaseOnly = false;
 
     cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
+    cout <<  "Firmware Factory" << endl;
 
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
@@ -167,7 +168,7 @@ int main(int argc, char *argv[])
 
     cout << "Generating build scripts...." << endl;
 
-    if (createDir(scriptGenerator::BUILDDIR) == -1) {
+    if (createDir(BUILDDIR) == -1) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
@@ -181,13 +182,13 @@ int main(int argc, char *argv[])
     if (generateOnly)
         return EXIT_SUCCESS;
 
-    std::system(scriptGenerator::SCRIPT_FETCH_CMD);
+    std::system(SCRIPT_FETCH_CMD);
 
     if (fetchOnly)
         return EXIT_SUCCESS;
 
     if (!releaseOnly)
-        std::system(scriptGenerator::SCRIPT_BUILD_CMD);
+        std::system(SCRIPT_BUILD_CMD);
 
     cout << "Copying release to server..." << endl;
 
@@ -196,7 +197,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    std::system(scriptGenerator::SCRIPT_RELEASE_CMD);
+    std::system(SCRIPT_RELEASE_CMD);
 
 	return EXIT_SUCCESS;
 }

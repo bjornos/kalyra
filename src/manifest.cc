@@ -106,9 +106,11 @@ void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* ma
         if (t != NULL) {
             cJSON_ArrayForEach(releaseFile, t)
             {
-                 // FIXME!!! windows make things complicated with their silly approach of \
-                //releaseFiles.emplace_back(target->getRoot() +"/" + releaseFile->valuestring);
+#if defined(_WIN32) || defined(_WIN64)
                 releaseFiles.emplace_back(target->getRoot() +"\\" + releaseFile->valuestring);
+#else
+                releaseFiles.emplace_back(target->getRoot() +"/" + releaseFile->valuestring);
+#endif
             }
         }
     }
