@@ -8,7 +8,7 @@ using namespace std;
 #if defined(_WIN32) || defined(_WIN64)
 static constexpr auto isWindows = true;
 #else
-static constexpr auto isWindows = true;
+static constexpr auto isWindows = false;
 #endif
 
 scriptGenerator::scriptGenerator()
