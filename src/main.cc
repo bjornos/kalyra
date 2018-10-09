@@ -13,6 +13,7 @@
 #include "cJSON/cJSON.h"
 #include "termcolor/termcolor.hpp"
 
+#include "manifest.hh"
 #include "packageRecipe.hh"
 #include "releaseComponent.hh"
 #include "firmwareRelease.hh"
@@ -85,114 +86,6 @@ int createDir(const string& dir)
 #endif
 }
 
-const cJSON* manifestGetValue(const cJSON* recipe, string tag)
-{
-    const cJSON* entry;
-
-	if (cJSON_HasObjectItem(recipe, tag.c_str())) {
-        entry = cJSON_GetObjectItemCaseSensitive(recipe, tag.c_str());
-    } else {
-    	cerr << "Warning: Could not find component '" << tag << "'." << endl;
-    	entry = cJSON_CreateString("Unknown");
-    }
-
-    return entry;
-}
-
-void manifestLoadHeader(const cJSON*& m, const string& manifest)
-{
-    std::ifstream t(manifest);
-    std::stringstream buffer;
-
-    buffer << t.rdbuf();
-
-    m = cJSON_Parse(buffer.str().c_str());
-
-    if (m == NULL) {
-        // TODO: add file exists check and report
-        auto errPtr = cJSON_GetErrorPtr();
-        if (errPtr != NULL) {
-            cout << "[DBG] Error before: " << errPtr << endl;
-        }
-        throw std::invalid_argument("Error parsing manifest.");
-    }
-}
-
-void manifestLoadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
-{
-    const cJSON* package;
-
-    auto packages = cJSON_GetObjectItemCaseSensitive(manifest, "packages");
-    cJSON_ArrayForEach(package, packages)
-    {
-        string revOverride("");
-        string targetOverride("");
-
-        auto recipe = cJSON_GetObjectItemCaseSensitive(package, "name");
-        auto rev = cJSON_GetObjectItemCaseSensitive(package, "revision");
-        auto target = cJSON_GetObjectItemCaseSensitive(package, "target");
-
-        if (!cJSON_IsString(recipe) || (recipe->valuestring == NULL)) {
-            throw std::invalid_argument("Error parsing targets.");
-        }
-
-        if (cJSON_IsString(rev) && (rev->valuestring != NULL))
-            revOverride = rev->valuestring;
-
-        if (cJSON_IsString(target) && (target->valuestring != NULL))
-            targetOverride = target->valuestring;
-
-        auto p(unique_ptr<packageRecipe>(new packageRecipe(recipe->valuestring, revOverride, targetOverride)));
-
-        fwrt->recipes.emplace_back(move(p));
-    }
-}
-
-void manifestLoadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
-{
-    const cJSON* component;
-    vector<string> preCommands;
-    vector<string> postCommands;
-    vector<string> releaseFiles;
-
-    auto components = cJSON_GetObjectItemCaseSensitive(manifest, "release-components");
-
-    const auto path = manifestGetValue(components, "release-path");
-
-    auto section = cJSON_GetObjectItemCaseSensitive(components, "pre-commands");
-    if (section != NULL) {
-        cJSON_ArrayForEach(component, section)
-        {
-            preCommands.emplace_back(component->valuestring);
-        }
-    }
-
-    section = cJSON_GetObjectItemCaseSensitive(components, "post-commands");
-    if (section != NULL) {
-        cJSON_ArrayForEach(component, section)
-        {
-            postCommands.emplace_back(component->valuestring);
-        }
-    }
-
-    for (auto& target : fwrt->recipes) {
-        const cJSON* releaseFile;
-        auto t = cJSON_GetObjectItem(components, target->getName().c_str());
-        if (t != NULL) {
-            cJSON_ArrayForEach(releaseFile, t)
-            {
-                 // FIXME!!! windows make things complicated with their silly approach of \
-                //releaseFiles.emplace_back(target->getRoot() +"/" + releaseFile->valuestring);
-                releaseFiles.emplace_back(target->getRoot() +"\\" + releaseFile->valuestring);
-            }
-        }
-    }
-
-    auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles, path->valuestring)));
-
-    fwrt->releaseComponents = move(rc);
-}
-
 int main(int argc, char *argv[])
 {
     const cJSON* manifest;
@@ -233,22 +126,22 @@ int main(int argc, char *argv[])
     cout << "Processing " << fileName << "... ";
 
     try {
-    	manifestLoadHeader(manifest, fileName);
+        manifest::loadHeader(manifest, fileName);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
         return EXIT_FAILURE;
     }
 
-    const auto product = manifestGetValue(manifest, TAG_PRODUCT);
-    const auto release = manifestGetValue(manifest, TAG_RELEASE);
-    const auto stage = manifestGetValue(manifest, TAG_STAGE);
-    const auto build = manifestGetValue(manifest, TAG_BUILD);
+    const auto product = manifest::getValue(manifest, TAG_PRODUCT);
+    const auto release = manifest::getValue(manifest, TAG_RELEASE);
+    const auto stage = manifest::getValue(manifest, TAG_STAGE);
+    const auto build = manifest::getValue(manifest, TAG_BUILD);
 
     auto fwrt(unique_ptr<firmwareRelease>(new firmwareRelease(product->valuestring,
     	      release->valuestring, stage->valuestring, build->valuestring)));
 
     try {
-        manifestLoadTargets(fwrt, manifest);
+        manifest::loadTargets(fwrt, manifest);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
             return EXIT_FAILURE;
@@ -264,7 +157,7 @@ int main(int argc, char *argv[])
 
     }
 
-    manifestLoadComponents(fwrt, manifest);
+    manifest::loadComponents(fwrt, manifest);
 
     cout << "All good." << endl << endl;
 
@@ -274,7 +167,7 @@ int main(int argc, char *argv[])
 
     cout << "Generating build scripts...." << endl;
 
-    if (createDir(BUILDDIR) == -1) {
+    if (createDir(scriptGenerator::BUILDDIR) == -1) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
@@ -288,13 +181,13 @@ int main(int argc, char *argv[])
     if (generateOnly)
         return EXIT_SUCCESS;
 
-    std::system(SCRIPT_FETCH_CMD);
+    std::system(scriptGenerator::SCRIPT_FETCH_CMD);
 
     if (fetchOnly)
         return EXIT_SUCCESS;
 
     if (!releaseOnly)
-        std::system(SCRIPT_BUILD_CMD);
+        std::system(scriptGenerator::SCRIPT_BUILD_CMD);
 
     cout << "Copying release to server..." << endl;
 
@@ -303,7 +196,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    std::system(SCRIPT_RELEASE_CMD);
+    std::system(scriptGenerator::SCRIPT_RELEASE_CMD);
 
 	return EXIT_SUCCESS;
 }

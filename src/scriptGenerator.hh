@@ -8,15 +8,7 @@ constexpr auto SCRIPT_BUILD = "build_targets.bat";
 constexpr auto SCRIPT_FETCH_CMD = "cmd.exe fetch_targets.bat";
 constexpr auto SCRIPT_BUILD_CMD = "cmd.exe build_targets.bat";
 #else*/
-constexpr auto BUILDDIR = "workdir";
 
-constexpr auto SCRIPT_FETCH = "workdir/fetch_targets.sh";
-constexpr auto SCRIPT_BUILD = "workdir/build_targets.sh";
-constexpr auto SCRIPT_RELEASE = "workdir/release_targets.bat";
-
-constexpr auto SCRIPT_FETCH_CMD = "bash workdir/fetch_targets.sh";
-constexpr auto SCRIPT_BUILD_CMD = "bash workdir/build_targets.sh";
-constexpr auto SCRIPT_RELEASE_CMD = "cmd  /C workdir\\release_targets.bat";
 
 //#endif
 
@@ -24,6 +16,15 @@ constexpr auto SCRIPT_RELEASE_CMD = "cmd  /C workdir\\release_targets.bat";
 class scriptGenerator {
 
 public:
+    static constexpr auto BUILDDIR = "workdir";
+    static constexpr auto SCRIPT_FETCH = "workdir/fetch_targets.sh";
+    static constexpr auto SCRIPT_BUILD = "workdir/build_targets.sh";
+    static constexpr auto SCRIPT_RELEASE = "workdir/release_targets.bat";
+
+    static constexpr auto SCRIPT_FETCH_CMD = "bash workdir/fetch_targets.sh";
+    static constexpr auto SCRIPT_BUILD_CMD = "bash workdir/build_targets.sh";
+    static constexpr auto SCRIPT_RELEASE_CMD = "cmd  /C workdir\\release_targets.bat";
+
     scriptGenerator();
     ~scriptGenerator();
 

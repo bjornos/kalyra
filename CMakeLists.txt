@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCES
 ${CMAKE_SOURCE_DIR}/main.cc
+${CMAKE_SOURCE_DIR}/manifest.cc
 ${CMAKE_SOURCE_DIR}/firmwareRelease.cc
 ${CMAKE_SOURCE_DIR}/packageRecipe.cc
 ${CMAKE_SOURCE_DIR}/scriptGenerator.cc
