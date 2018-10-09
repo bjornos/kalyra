@@ -71,7 +71,7 @@ int createDir(const string& dir)
 {
 //FIXME: look into c++17 for cross platform solution
 #if defined(_WIN32) || defined(_WIN64)
-    if (!CreateDirectory(dir, NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+    if (!CreateDirectory(dir.c_str(), NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
         return -1;
     } else {
         return 0;
