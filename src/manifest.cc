@@ -2,6 +2,12 @@
 
 using namespace std;
 
+bool fileExists(const string& fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
+
 const cJSON* manifest::getValue(const cJSON* recipe, string tag)
 {
     const cJSON* entry;
@@ -21,12 +27,14 @@ void manifest::loadHeader(const cJSON*& m, const string& manifest)
     std::ifstream t(manifest);
     std::stringstream buffer;
 
+    if (!fileExists(manifest))
+        throw std::invalid_argument("Manifest file not found.");
+
     buffer << t.rdbuf();
 
     m = cJSON_Parse(buffer.str().c_str());
 
     if (m == NULL) {
-        // TODO: add file exists check and report
         auto errPtr = cJSON_GetErrorPtr();
         if (errPtr != NULL) {
             cout << "[DBG] Error before: " << errPtr << endl;
