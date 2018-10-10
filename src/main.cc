@@ -21,6 +21,11 @@
 
 using namespace std;
 
+#if defined(_WIN32) || defined(_WIN64)
+// this is so extra silly
+#define cerr cout
+#endif
+
 constexpr auto KALYRA_MAJOR = 0;
 constexpr auto KALYRA_MINOR = 2;
 constexpr auto KALYRA_SUB = 1;
@@ -137,7 +142,7 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("-r"))
         releaseOnly = true;
 
-    cout << "Processing " << fileName << "... ";
+    cout << "Processing " << fileName << "... " << endl << endl;
 
     try {
         manifest::loadHeader(manifest, fileName);
