@@ -198,11 +198,7 @@ int main(int argc, char *argv[])
     if (generateOnly)
         return EXIT_SUCCESS;
 
-    if (!runScript(SCRIPT_CMD_FETCH)) {
-        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
-        return EXIT_FAILURE;
-    }
-
+    runScript(SCRIPT_CMD_FETCH); // fetch may return non success - but it is not neccessary critical
 
     if (fetchOnly)
         return EXIT_SUCCESS;
