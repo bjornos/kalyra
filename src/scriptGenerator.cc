@@ -53,7 +53,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
     script.close();
 }
 
-void scriptGenerator::build(unique_ptr<firmwareRelease>& release)
+void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& singleTarget)
 {
     std::ofstream script(SCRIPT_BUILD, std::ios_base::binary | std::ios_base::out);
     string wat = "";
@@ -69,13 +69,15 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release)
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto& entry : release->recipes) {
-        script << wat << "echo build " << entry->getName() << std::endl;
-        script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
-        for (auto& t : entry->getCmdList()) {
+        if (singleTarget.empty() || (getName().compare(singleTarget) == 0)) {
+            script << wat << "echo build " << entry->getName() << std::endl;
+            script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
+            for (auto& t : entry->getCmdList()) {
             if (!t.empty())
                 script << wat << t << " || exit 1" << endl;
+            }
+            script << wat << "cd .." << std::endl;
         }
-        script << wat << "cd .." << std::endl;
     }
 
     script.close();

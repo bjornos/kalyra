@@ -108,19 +108,31 @@ int main(int argc, char *argv[])
 {
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
-    auto fetchOnly = false;
-    auto generateOnly = false;
-    auto releaseOnly = false;
+    string singleTarget;
+    auto optFetchOnly = false;
+    auto optGenerateOnly = false;
+    auto optBuildOnly = false;
+    auto optFwrt = false;
+    auto optClean = false;
 
     cout <<  termcolor::cyan << "Kalyra Build System v" << KALYRA_MAJOR <<"." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
     cout <<  "Firmware Factory: ";
 
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
-        cout << "-m, --manifest <name> : Project manifest file (mandatory)." << endl;
-        cout << "-g                    : Generate build scripts only" << endl;
-        cout << "-f                    : Fetch targets only" << endl;
+        cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
+        cout << "-g, --generate          : Generate build scripts only" << endl;
+        cout << "-f, --fetch             : Fetch targets only" << endl;
+        cout << "-c, --clean             : Clean working directory" << endl;
+        cout << "-b, --build <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
+        cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
     	return EXIT_SUCCESS;
+    }
+
+    if (cmdOptions.cmdOptionExists("-c") || cmdOptions.cmdOptionExists("--clean")) {
+        cout << "Clean up workspace..." << endl;
+        // yes, very bad practise. Shall be removed when making the move to c++17
+        return std::system("rm -rf " BUILDDIR);
     }
 
     auto fileName(cmdOptions.getCmdOption("-m"));
@@ -133,13 +145,21 @@ int main(int argc, char *argv[])
     }
 
     if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch"))
-        fetchOnly = true;
+        optFetchOnly = true;
 
     if (cmdOptions.cmdOptionExists("-g"))
-        generateOnly = true;
+        optGenerateOnly = true;
 
-    if (cmdOptions.cmdOptionExists("-r"))
-        releaseOnly = true;
+    if (cmdOptions.cmdOptionExists("--fwrt"))
+        optFwrt = true;
+
+    if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists("--build")) {
+        optBuildOnly = true;
+        singleTarget.assign(cmdOptions.getCmdOption("-b"));
+        if (singleTarget.empty()) {
+            singleTarget.assign(cmdOptions.getCmdOption("--build"));
+        }
+    }
 
     cout << "Processing " << fileName << "... " << endl << endl;
 
@@ -177,9 +197,12 @@ int main(int argc, char *argv[])
 
     manifest::loadComponents(fwrt, manifest);
 
-    cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
-        << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
-    cout << "Release Path: " << termcolor::yellow << fwrt->releaseComponents->releasePath << termcolor::reset << endl << endl;
+    if (optFwrt) {
+        cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
+            << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
+        cout << "Release Path: " << termcolor::yellow << fwrt->releaseComponents->releasePath \
+            << termcolor::reset << endl << endl;
+    }
 
     cout << "Generating build scripts...." << endl;
 
@@ -190,29 +213,34 @@ int main(int argc, char *argv[])
 
     scriptGenerator::fetch(fwrt);
 
-    scriptGenerator::build(fwrt);
+    scriptGenerator::build(fwrt, singleTarget);
 
-    scriptGenerator::release(fwrt);
+    if (optFwrt)
+        scriptGenerator::release(fwrt);
 
-    if (generateOnly)
+    if (optGenerateOnly)
         return EXIT_SUCCESS;
 
-    runScript(SCRIPT_CMD_FETCH); // fetch may return non success - but it is not neccessary critical
+    if (!optBuildOnly) {
+        // fetch may return non success - but it is not neccessarily critical
+        runScript(SCRIPT_CMD_FETCH);
 
-    if (fetchOnly)
-        return EXIT_SUCCESS;
+        if (optFetchOnly)
+            return EXIT_SUCCESS;
+    }
 
     if (!runScript(SCRIPT_CMD_BUILD)) {
-        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
+        cerr << termcolor::red << "Abort!" << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
 
+    if (optFwrt) {
+        cout << "Copying release to server..." << endl;
 
-    cout << "Copying release to server..." << endl;
-
-    if (!runScript(SCRIPT_CMD_RELEASE)) {
-        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
-        return EXIT_FAILURE;
+        if (!runScript(SCRIPT_CMD_RELEASE)) {
+            cerr << termcolor::red << "Abort!" << termcolor::reset << endl;
+            return EXIT_FAILURE;
+        }
     }
 
 	return EXIT_SUCCESS;
