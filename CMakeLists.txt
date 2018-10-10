@@ -7,7 +7,7 @@ project(Kalyra)
 set(CMAKE_SOURCE_DIR src)
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCES
+set(FF_SOURCES
 ${CMAKE_SOURCE_DIR}/main.cc
 ${CMAKE_SOURCE_DIR}/manifest.cc
 ${CMAKE_SOURCE_DIR}/firmwareRelease.cc
@@ -16,7 +16,13 @@ ${CMAKE_SOURCE_DIR}/scriptGenerator.cc
 ${CMAKE_SOURCE_DIR}/releaseComponent.cc
 lib/cJSON/cJSON.c)
 
+set(RPGEN_SOURCES
+${CMAKE_SOURCE_DIR}/rpgen.cc
+lib/cJSON/cJSON.c)
+
 include_directories(lib)
 
 # Firmware Factory
-add_executable(ff ${SOURCES})
+add_executable(ff ${FF_SOURCES})
+# Recipe Generator
+add_executable(rpgen ${RPGEN_SOURCES})
