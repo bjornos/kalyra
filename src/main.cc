@@ -86,6 +86,19 @@ int createDir(const string& dir)
 #endif
 }
 
+bool runScript(const char* cmd)
+{
+    auto cmdResult = std::system(cmd);
+#if defined(_WIN32) || defined(_WIN64)
+    if (cmdResult != 0) {
+#else
+    if (WEXITSTATUS(cmdResult) != 0) {
+#endif
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     const cJSON* manifest;
@@ -145,22 +158,20 @@ int main(int argc, char *argv[])
         manifest::loadTargets(fwrt, manifest);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
-            return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     for (auto& entry : fwrt->recipes) {
         try {
             packageRecipe::parseRecipe(entry);
         } catch (const exception& e) {
-            cerr << termcolor::red << e.what() << termcolor::reset << endl;
+            cerr << termcolor::red << e.what() << termcolor::reset << endl << "Abort!" << endl;
             return EXIT_FAILURE;
         }
 
     }
 
     manifest::loadComponents(fwrt, manifest);
-
-    cout << "All good." << endl << endl;
 
     cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
         << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
@@ -182,34 +193,33 @@ int main(int argc, char *argv[])
     if (generateOnly)
         return EXIT_SUCCESS;
 
-    int cmdResult;
-
-    cmdResult = std::system(SCRIPT_CMD_FETCH);
-    cout << "EXIT" << WEXITSTATUS(cmdResult) << endl;
-
-    if (WEXITSTATUS(cmdResult) == -1) {
-        cerr << "Error. Abort." << endl;
+    if (!runScript(SCRIPT_CMD_FETCH)) {
+        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
+
 
     if (fetchOnly)
         return EXIT_SUCCESS;
 
-    cmdResult = std::system(SCRIPT_CMD_BUILD);
-    cout << "EXIT" << WEXITSTATUS(cmdResult) << endl;
-    if (WEXITSTATUS(cmdResult) == -1) {
-        cerr << "Error. Abort." << endl;
+    if (!runScript(SCRIPT_CMD_BUILD)) {
+        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
 
+
     cout << "Copying release to server..." << endl;
 
+    // FIXME: move into release script
     if (createDir(fwrt->releaseComponents->releasePath) == -1) {
         cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
 
-    std::system(SCRIPT_CMD_RELEASE);
+    if (!runScript(SCRIPT_CMD_RELEASE)) {
+        cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
+        return EXIT_FAILURE;
+    }
 
 	return EXIT_SUCCESS;
 }

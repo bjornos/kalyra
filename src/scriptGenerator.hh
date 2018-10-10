@@ -4,11 +4,11 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #define PLT_SUFFIX "bat"
-#define PLT_SHELL "cmd  /C"
+#define PLT_SHELL "cmd.exe  /C"
 #define PLT_SLASH "\\"
 #else
 #define PLT_SUFFIX "sh"
-#define PLT_SHELL "bash "
+#define PLT_SHELL "bash"
 #define PLT_SLASH "/"
 #endif
 

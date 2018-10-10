@@ -34,7 +34,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
-    script << wat << "cd " << BUILDDIR << endl;
+    script << wat << "cd " << BUILDDIR << " || exit 1"<< endl;
 
     for (auto& entry : release->recipes) {
         script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
@@ -66,13 +66,13 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release)
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
-    script << wat << "cd " << BUILDDIR << endl;
+    script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto& entry : release->recipes) {
         script << wat << "echo build " << entry->getName() << std::endl;
-        script << wat << "cd " << entry->getRoot() << std::endl;
+        script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
         for (auto& t : entry->getCmdList())
-            script << wat << t << " || exit 4" << endl;
+            script << wat << t << " || exit 1" << endl;
         script << wat << "cd .." << std::endl;
     }
 
@@ -89,17 +89,17 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
     else
         script << "#!/bin/sh" << std::endl;
 
-    script << wat << "cd " << BUILDDIR << endl;
+    script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto c : release->releaseComponents->preCommands){
-        script << wat << c << std::endl;
+        script << wat << c << " || exit 1" << std::endl;
     }
 
     for (auto& file : release->releaseComponents->components)
-            script << wat << "cp -v " << file << " " << release->releaseComponents->releasePath << endl;
+            script << wat << "cp -v " << file << " " << release->releaseComponents->releasePath << " || exit 1" << endl;
 
     for (auto cmd : release->releaseComponents->postCommands)
-        script << wat << cmd << std::endl;
+        script << wat << cmd << " || exit 1" << std::endl;
 
     script.close();
 }
