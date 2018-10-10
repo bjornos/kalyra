@@ -69,7 +69,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto& entry : release->recipes) {
-        if (singleTarget.empty() || (getName().compare(singleTarget) == 0)) {
+        if (singleTarget.empty() || (entry->getName().compare(singleTarget) == 0)) {
             script << wat << "echo build " << entry->getName() << std::endl;
             script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
             for (auto& t : entry->getCmdList()) {
