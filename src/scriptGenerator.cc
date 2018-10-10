@@ -28,7 +28,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
 
     if (isWindows) {
         wat = "@";
-        script << wat << "if not exist " << BUILDDIR << " md " BUILDDIR << endl;
+        script << wat << "if not exist " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
@@ -60,7 +60,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release)
 
     if (isWindows) {
         wat = "@";
-        script << wat << "if not exist " << BUILDDIR << " md " BUILDDIR << endl;
+        script << wat << "if not exist " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
@@ -86,10 +86,14 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
     std::ofstream script(SCRIPT_RELEASE, std::ios_base::binary | std::ios_base::out);
     string wat = "";
 
-    if (isWindows)
+    if (isWindows) {
         wat = "@";
-    else
+        script << wat << "if not exist " << release->releaseComponents->releasePath << " md " << release->releaseComponents->releasePath << endl;
+
+    } else {
         script << "#!/bin/sh" << std::endl;
+        script << "mkdir -p " << release->releaseComponents->releasePath << " || exit 1" << endl;
+    }
 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 

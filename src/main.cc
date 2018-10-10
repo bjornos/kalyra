@@ -120,7 +120,6 @@ int main(int argc, char *argv[])
         cout << "-m, --manifest <name> : Project manifest file (mandatory)." << endl;
         cout << "-g                    : Generate build scripts only" << endl;
         cout << "-f                    : Fetch targets only" << endl;
-        cout << "-c <target, ..>       : " << termcolor::red << "[Not Implemented Yet]" << termcolor::reset << " Compile/Assemble firmware only. No target means all." << endl;
     	return EXIT_SUCCESS;
     }
 
@@ -133,7 +132,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (cmdOptions.cmdOptionExists("-f"))
+    if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch"))
         fetchOnly = true;
 
     if (cmdOptions.cmdOptionExists("-g"))
@@ -210,12 +209,6 @@ int main(int argc, char *argv[])
 
 
     cout << "Copying release to server..." << endl;
-
-    // FIXME: move into release script
-    if (createDir(fwrt->releaseComponents->releasePath) == -1) {
-        cerr << termcolor::red << "Failed to create release directory." << termcolor::reset << endl;
-        return EXIT_FAILURE;
-    }
 
     if (!runScript(SCRIPT_CMD_RELEASE)) {
         cerr << termcolor::red << "Error. Abort." << termcolor::reset << endl;
