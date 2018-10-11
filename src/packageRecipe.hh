@@ -6,8 +6,9 @@
 
 class packageRecipe {
 public:
-	packageRecipe(std::string name, std::string revisionOverride, std::string targetOverride);
-	~packageRecipe();
+    packageRecipe(std::string name, std::string revisionOverride, std::string targetOverride);
+    packageRecipe(std::string name, std::string url);
+    ~packageRecipe();
 
     static void parseRecipe(std::unique_ptr<packageRecipe>& recipe);
 

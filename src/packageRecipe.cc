@@ -17,6 +17,12 @@ packageRecipe::packageRecipe(string name, string revisionOverride, string target
 {
 }
 
+packageRecipe::packageRecipe(string name, string url) :
+    name(name),
+    url(url)
+{
+}
+
 packageRecipe::~packageRecipe()
 {
 }
