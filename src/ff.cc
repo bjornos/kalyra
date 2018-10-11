@@ -173,9 +173,19 @@ int main(int argc, char *argv[])
             << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
         cout << "Release Path: " << termcolor::yellow << fwrt->releaseComponents->releasePath \
             << termcolor::reset << endl << endl;
+
+        string answer;
+
+        cout << "Are you sure about this? (Y/N): ";
+        cin >> answer;
+        if (answer.compare("Y") != 0 || answer.compare("y") != 0) {
+            cout << endl << "Bailing out." << endl;
+            return EXIT_SUCCESS;
+        }
     }
 
-    cout << "Generating build scripts...." << endl;
+    if (optGenerateOnly)
+        cout << "Generating build scripts...." << endl;
 
     if (createDir(BUILDDIR) == -1) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
