@@ -77,7 +77,7 @@ void createRecipe(unique_ptr<packageRecipe>& r, string& path)
         throw std::logic_error("Failed to create environment section");
     }
 
-    cJSON* target = cJSON_AddArrayToObject(recipe, "default-target");
+    cJSON* target = cJSON_AddArrayToObject(recipe, "default.target");
     if (target == NULL) {
         throw std::logic_error("default-target section");
     }
@@ -143,12 +143,10 @@ int main(int argc, char *argv[])
         	outPath.assign(DEFAULT_RECIPE_PATH);
     }
 
-    cout << "Generating recipe..." << endl << endl;
-
     auto rp(unique_ptr<packageRecipe>(new packageRecipe(recipeName, url)));
 
-    cout << "Recipe: " << termcolor::yellow << recipeName << termcolor::reset << endl;
-    cout << "URL: " << termcolor::yellow << url << termcolor::reset << endl << endl;
+    cout << endl << "Recipe: " << termcolor::yellow << recipeName << termcolor::reset << endl;
+    cout << "URL: " << termcolor::yellow << url << termcolor::reset << endl;
 
     createDir(outPath);
 
@@ -158,6 +156,8 @@ int main(int argc, char *argv[])
         cerr << e.what() << " Abort!" << endl;
         return EXIT_FAILURE;
     }
+
+    cout << "Done." << endl;
 
 	return EXIT_SUCCESS;
 }
