@@ -9,3 +9,5 @@ ff.exe
 libff.dll.a
 ff
 rpgen
+librpgen.dll.a
+rpgen.exe
