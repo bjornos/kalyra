@@ -1,4 +1,5 @@
 #include "manifest.hh"
+#include "kalyra.hh"
 
 using namespace std;
 
@@ -82,8 +83,6 @@ void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* ma
 
     auto components = cJSON_GetObjectItemCaseSensitive(manifest, "release-components");
 
-    const auto path = getValue(components, "release-path");
-
     auto section = cJSON_GetObjectItemCaseSensitive(components, "pre-commands");
     if (section != NULL) {
         cJSON_ArrayForEach(component, section)
@@ -104,18 +103,13 @@ void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* ma
         const cJSON* releaseFile;
         auto t = cJSON_GetObjectItem(components, target->getName().c_str());
         if (t != NULL) {
-            cJSON_ArrayForEach(releaseFile, t)
-            {
-#if defined(_WIN32) || defined(_WIN64)
-                releaseFiles.emplace_back(target->getRoot() +"\\" + releaseFile->valuestring);
-#else
-                releaseFiles.emplace_back(target->getRoot() +"/" + releaseFile->valuestring);
-#endif
+            cJSON_ArrayForEach(releaseFile, t) {
+                releaseFiles.emplace_back(target->getRoot() + PLT_SLASH + releaseFile->valuestring);
             }
         }
     }
 
-    auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles, path->valuestring)));
+    auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles)));
 
     fwrt->releaseComponents = move(rc);
 }

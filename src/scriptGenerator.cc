@@ -90,11 +90,11 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
 
     if (isWindows) {
         wat = "@";
-        script << wat << "if not exist " << release->releaseComponents->releasePath << " md " << release->releaseComponents->releasePath << endl;
+        script << wat << "if not exist " << release->getReleasePath() << " md " << release->getReleasePath() << endl;
 
     } else {
         script << "#!/bin/sh" << std::endl;
-        script << "mkdir -p " << release->releaseComponents->releasePath << " || exit 1" << endl;
+        script << "mkdir -p " << release->getReleasePath() << " || exit 1" << endl;
     }
 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
@@ -104,7 +104,9 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
     }
 
     for (auto& file : release->releaseComponents->components)
-            script << wat << "cp -v " << file << " " << release->releaseComponents->releasePath << " || exit 1" << endl;
+            script << wat << "cp -v " << file << " " << \
+            release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << release->releaseComponents->getFileName(file) \
+            << " || exit 1" << endl;
 
     for (auto cmd : release->releaseComponents->postCommands)
         script << wat << cmd << " || exit 1" << std::endl;

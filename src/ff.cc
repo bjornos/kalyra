@@ -40,6 +40,7 @@ constexpr auto TAG_PRODUCT = "product";
 constexpr auto TAG_RELEASE = "release";
 constexpr auto TAG_STAGE = "stage";
 constexpr auto TAG_BUILD = "build";
+constexpr auto TAG_PATH = "release-path";
 constexpr auto TAG_PACKAGES = "packages";
 
 int createDir(const string& dir)
@@ -79,6 +80,7 @@ int main(int argc, char *argv[])
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
     string singleTarget;
+    string releasePrefix;
     auto optFetchOnly = false;
     auto optGenerateOnly = false;
     auto optBuildOnly = false;
@@ -161,9 +163,10 @@ int main(int argc, char *argv[])
     const auto release = manifest::getValue(manifest, TAG_RELEASE);
     const auto stage = manifest::getValue(manifest, TAG_STAGE);
     const auto build = manifest::getValue(manifest, TAG_BUILD);
+    const auto rPath = manifest::getValue(manifest, TAG_PATH);
 
     auto fwrt(unique_ptr<firmwareRelease>(new firmwareRelease(product->valuestring,
-    	      release->valuestring, stage->valuestring, build->valuestring)));
+        release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring)));
 
     try {
         manifest::loadTargets(fwrt, manifest);
@@ -187,14 +190,15 @@ int main(int argc, char *argv[])
     if (optFwrt) {
         cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
             << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
-        cout << "Release Path: " << termcolor::yellow << fwrt->releaseComponents->releasePath \
-            << termcolor::reset << endl << endl;
 
-        string answer;
+        cout << "Release Path: " << termcolor::yellow << fwrt->getReleasePath() << \
+            termcolor::reset << endl << endl;
 
         cout << "Are you sure about this? (Y/N): ";
+        char answer;
         cin >> answer;
-        if (answer.compare("Y") != 0 || answer.compare("y") != 0) {
+        cout << "answer: " << answer << endl;
+        if ((answer != 'y') && (answer != 'Y')) {
             cout << endl << "Bailing out." << endl;
             return EXIT_SUCCESS;
         }

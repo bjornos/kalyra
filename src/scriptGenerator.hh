@@ -1,16 +1,7 @@
 #pragma once
 
 #include "firmwareRelease.hh"
-
-#if defined(_WIN32) || defined(_WIN64)
-#define PLT_SUFFIX "bat"
-#define PLT_SHELL "cmd.exe  /C"
-#define PLT_SLASH "\\"
-#else
-#define PLT_SUFFIX "sh"
-#define PLT_SHELL "bash"
-#define PLT_SLASH "/"
-#endif
+#include "kalyra.hh"
 
 #define FETCH "fetch_targets"
 #define BUILD "build_targets"
