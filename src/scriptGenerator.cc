@@ -99,16 +99,16 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
-    for (auto c : release->releaseComponents->preCommands){
+    for (auto c : release->releaseComponents->getPreCommands()){
         script << wat << c << " || exit 1" << std::endl;
     }
 
-    for (auto& file : release->releaseComponents->components)
+    for (auto& file : release->releaseComponents->getComponents())
             script << wat << "cp -v " << file << " " << \
             release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << release->releaseComponents->getFileName(file) \
             << " || exit 1" << endl;
 
-    for (auto cmd : release->releaseComponents->postCommands)
+    for (auto cmd : release->releaseComponents->getPostCommands())
         script << wat << cmd << " || exit 1" << std::endl;
 
     script.close();

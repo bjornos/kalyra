@@ -31,3 +31,18 @@ string releaseComponent::getFileName(string& pathName)
 
     return s;
 }
+
+vector<string>& releaseComponent::getPreCommands()
+{
+	return preCommands;
+}
+
+vector<string>& releaseComponent::getComponents()
+{
+	return components;
+}
+
+vector<string>& releaseComponent::getPostCommands()
+{
+	return postCommands;
+}
