@@ -109,9 +109,23 @@ int main(int argc, char *argv[])
     auto fileName(cmdOptions.getCmdOption("-m"));
     if (fileName.empty()) {
         fileName.assign (cmdOptions.getCmdOption("--manifest"));
-        if (fileName.empty()) {
+    }
+    if (fileName.empty()) {
+        // No manifest provided. Try with previously selected manifest, if any.
+        ifstream mFile(".kalyra-manifest");
+        if (mFile.is_open()) {
+            getline(mFile, fileName);
+            mFile.close();
+        } else {
             cerr <<  "Missing manifest file. Try --help" <<  endl;
-    	    return EXIT_FAILURE;
+            return EXIT_FAILURE;
+        }
+    } else {
+        // Save manifest as default for this build tree
+        ofstream mFile (".kalyra-manifest");
+        if (mFile.is_open()) {
+            mFile << fileName;
+            mFile.close();
         }
     }
 
@@ -138,6 +152,8 @@ int main(int argc, char *argv[])
         manifest::loadHeader(manifest, fileName);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
+        // No valid manifest is set
+        remove(".kalyra-manifest");
         return EXIT_FAILURE;
     }
 
