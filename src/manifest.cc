@@ -44,9 +44,10 @@ void manifest::loadHeader(const cJSON*& m, const string& manifest)
     }
 }
 
-void manifest::loadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
+vector<unique_ptr<packageRecipe>> manifest::loadTargets(const cJSON* manifest)
 {
     const cJSON* package;
+    vector<unique_ptr<packageRecipe>> recipes;
 
     auto packages = cJSON_GetObjectItemCaseSensitive(manifest, "packages");
     cJSON_ArrayForEach(package, packages)
@@ -70,11 +71,13 @@ void manifest::loadTargets(unique_ptr<firmwareRelease>& fwrt, const cJSON* manif
 
         auto p(unique_ptr<packageRecipe>(new packageRecipe(recipe->valuestring, revOverride, targetOverride)));
 
-        fwrt->recipes.emplace_back(move(p));
+        recipes.emplace_back(move(p));
     }
+
+    return recipes;
 }
 
-void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest)
+unique_ptr<releaseComponent> manifest::loadComponents(std::vector<std::unique_ptr<packageRecipe>>& recipes, const cJSON* manifest)
 {
     const cJSON* component;
     vector<string> preCommands;
@@ -99,7 +102,7 @@ void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* ma
         }
     }
 
-    for (auto& target : fwrt->recipes) {
+    for (auto& target : recipes) {
         const cJSON* releaseFile;
         auto t = cJSON_GetObjectItem(components, target->getName().c_str());
         if (t != NULL) {
@@ -111,5 +114,5 @@ void manifest::loadComponents(unique_ptr<firmwareRelease>& fwrt, const cJSON* ma
 
     auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles)));
 
-    fwrt->releaseComponents = move(rc);
+    return move(rc);
 }

@@ -3,6 +3,8 @@
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <vector>
+
 #include "cJSON/cJSON.h"
 #include "termcolor/termcolor.hpp"
 
@@ -18,6 +20,6 @@ public:
     
     static const cJSON* getValue(const cJSON* recipe, std::string tag);
 	static void loadHeader(const cJSON*& m, const std::string& manifest);
-	static void loadTargets(std::unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest);
-	static void loadComponents(std::unique_ptr<firmwareRelease>& fwrt, const cJSON* manifest);
+    static std::vector<std::unique_ptr<packageRecipe>> loadTargets(const cJSON* manifest);
+	static std::unique_ptr<releaseComponent> loadComponents(std::vector<std::unique_ptr<packageRecipe>>& recipes, const cJSON* manifest);
 };

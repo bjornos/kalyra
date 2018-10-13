@@ -36,7 +36,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
 
     script << wat << "cd " << BUILDDIR << " || exit 1"<< endl;
 
-    for (auto& entry : release->recipes) {
+    for (auto& entry : release->getRecipes()) {
         script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
         if (!entry->getRev().empty())
             script << entry->getRev();
@@ -68,7 +68,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
-    for (auto& entry : release->recipes) {
+    for (auto& entry : release->getRecipes()) {
         if (singleTarget.empty() || (entry->getName().compare(singleTarget) == 0)) {
             script << wat << "echo build " << entry->getName() << std::endl;
             script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
@@ -99,16 +99,16 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
 
     script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
 
-    for (auto c : release->releaseComponents->getPreCommands()){
+    for (auto c : (release->getReleaseComponents())->getPreCommands()) {
         script << wat << c << " || exit 1" << std::endl;
     }
 
-    for (auto& file : release->releaseComponents->getComponents())
+    for (auto& file : (release->getReleaseComponents())->getComponents())
             script << wat << "cp -v " << file << " " << \
-            release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << release->releaseComponents->getFileName(file) \
+            release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << (release->getReleaseComponents())->getFileName(file) \
             << " || exit 1" << endl;
 
-    for (auto cmd : release->releaseComponents->getPostCommands())
+    for (auto cmd : (release->getReleaseComponents())->getPostCommands())
         script << wat << cmd << " || exit 1" << std::endl;
 
     script.close();

@@ -165,17 +165,15 @@ int main(int argc, char *argv[])
     const auto build = manifest::getValue(manifest, TAG_BUILD);
     const auto rPath = manifest::getValue(manifest, TAG_PATH);
 
-    auto fwrt(unique_ptr<firmwareRelease>(new firmwareRelease(product->valuestring,
-        release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring)));
-
+    vector<unique_ptr<packageRecipe>> recipes;
     try {
-        manifest::loadTargets(fwrt, manifest);
+        recipes = manifest::loadTargets(manifest);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
         return EXIT_FAILURE;
     }
 
-    for (auto& entry : fwrt->recipes) {
+    for (auto& entry : recipes) {
         try {
             packageRecipe::parseRecipe(entry);
         } catch (const exception& e) {
@@ -185,7 +183,10 @@ int main(int argc, char *argv[])
 
     }
 
-    manifest::loadComponents(fwrt, manifest);
+    auto components(unique_ptr<releaseComponent>(manifest::loadComponents(recipes, manifest)));
+
+    auto fwrt(unique_ptr<firmwareRelease>(new firmwareRelease(product->valuestring,
+        release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring, move(recipes), move(components))));
 
     if (optFwrt) {
         cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
