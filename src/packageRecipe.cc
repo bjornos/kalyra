@@ -44,7 +44,8 @@ void packageRecipe::parseRecipe(unique_ptr<packageRecipe>& recipe)
         } else {
             cJSON_Delete(buildPackage);
             cout << errPtr << endl;
-            throw std::invalid_argument("Parse error");
+            const string error(recipe->name + ": Parse error");
+            throw std::invalid_argument(error);
         }
     }
 
