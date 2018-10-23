@@ -21,6 +21,18 @@ scriptGenerator::~scriptGenerator()
 
 }
 
+const string gitClone(std::unique_ptr<packageRecipe> &entry)
+{
+    string clone("git clone " + entry->getUrl() + " -q");
+
+    if (!entry->getRev().empty()) {
+        clone.append(" -b ");
+        clone.append(entry->getRev());
+    }
+
+    return clone;
+}
+
 void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
 {
     std::ofstream script(SCRIPT_FETCH, std::ios_base::binary | std::ios_base::out);
@@ -28,7 +40,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
 
     if (isWindows) {
         wat = "@";
-        script << wat << "if not exist " << BUILDDIR << " md " << BUILDDIR << endl;
+        script << wat << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
@@ -44,10 +56,16 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
             script << "master";
         script << std::endl;
 
-        script << wat << "git clone " << entry->getUrl() << " -q";
-        if (!entry->getRev().empty())
-            script << " -b " << entry->getRev();
-        script << std::endl;
+        if (isWindows) {
+            script << wat << "IF NOT EXIST ." << entry->getName() << "-fetched (" << gitClone(entry) << ")";
+            script << " ELSE (@echo  **** Using local mirror)" << endl;
+        } else {
+            script << "if [ -ne ." << entry->getName() << "-fetched ]" << endl;
+            script << gitClone(entry)  << endl;
+            script << "else echo  **** Using local mirror" << endl;
+        }
+
+        script << wat << "touch ." << entry->getName() << "-fetched" << endl;;
     }
 
     script.close();
