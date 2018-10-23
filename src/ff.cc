@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("-c") || cmdOptions.cmdOptionExists("--clean")) {
         cout << "Clean up workspace..." << endl;
         // yes, very bad practise. Shall be removed when making the move to c++17
-        return std::system("rm -rf " BUILDDIR);
+        return std::system("rm -rf " BUILDDIR " .kalyra-manifest");
     }
 
     auto fileName(cmdOptions.getCmdOption("-m"));
