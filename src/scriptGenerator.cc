@@ -33,13 +33,16 @@ const string gitClone(std::unique_ptr<packageRecipe> &entry)
     return clone;
 }
 
-void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
+void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& singleTarget)
 {
     std::ofstream script(SCRIPT_FETCH, std::ios_base::binary | std::ios_base::out);
     string wat = "";
+    string comment = "# ";
+    bool targetFetch = false;
 
     if (isWindows) {
         wat = "@";
+        comment.assign("REM ");
         script << wat << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
@@ -49,24 +52,50 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release)
     script << wat << "cd " << BUILDDIR << " || exit 1"<< endl;
 
     for (auto& entry : release->getRecipes()) {
-        script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
-        if (!entry->getRev().empty())
-            script << entry->getRev();
-        else
-            script << "master";
-        script << std::endl;
 
-        if (isWindows) {
-            script << wat << "IF NOT EXIST ." << entry->getName() << "-fetched (" << gitClone(entry) << ")";
-            script << " ELSE (@echo  **** Using local mirror)" << endl;
-        } else {
-            script << "if [ -ne ." << entry->getName() << "-fetched ]" << endl;
-            script << gitClone(entry)  << endl;
-            script << "else echo  **** Using local mirror" << endl;
+        if (singleTarget.empty()) {
+            // The normal case - fetch all recipe components in manifest
+            script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
+            if (!entry->getRev().empty())
+                script << entry->getRev();
+            else
+                script << "master";
+            script << std::endl;
+
+            if (isWindows) {
+                script << wat << "IF NOT EXIST ." << entry->getName() << "-fetched (" << gitClone(entry) << ")";
+                script << " ELSE (@echo  **** Using local mirror)" << endl;
+            } else {
+                script << "if [ -ne ." << entry->getName() << "-fetched ]" << endl;
+                script << gitClone(entry)  << endl;
+                script << "else echo  **** Using local mirror" << endl;
+            }
+
+            script << wat << "touch ." << entry->getName() << "-fetched" << endl;
+            targetFetch = true;
+        } else if (singleTarget.compare(entry->getName()) == 0) {
+            // Fetch only one recipe component
+            script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
+            if (!entry->getRev().empty())
+                script << entry->getRev();
+            else
+                script << "master";
+            script << " || exit 1 " << std::endl;
+
+
+            if (isWindows) {
+                script << wat << "IF EXIST " << entry->getName() << " rm -rf " << entry->getName() << endl;
+            } else {
+                script << "rm -rf " << entry->getName() << endl;
+            }
+            script << wat << gitClone(entry) << " || exit 1" << endl;
+            script << wat << "touch ." << entry->getName() << "-fetched" << endl;
+            targetFetch = true;
         }
-
-        script << wat << "touch ." << entry->getName() << "-fetched" << endl;;
     }
+
+    if (!targetFetch)
+        script << wat << comment << "No targets found. Thats an error." << endl << wat << "exit 1" << endl;
 
     script.close();
 }

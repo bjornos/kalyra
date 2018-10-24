@@ -95,9 +95,9 @@ int main(int argc, char *argv[])
     	cout << "Available command options:" << endl;
         cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
         cout << "-g, --generate          : Generate build scripts only" << endl;
-        cout << "-f, --fetch             : Fetch targets only" << endl;
-        cout << "-c, --clean             : Clean working directory" << endl;
+        cout << "-f, --fetch <recipe>    : Fetch recipe repository only. No argument means all recipes." << endl;
         cout << "-b, --build <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
+        cout << "-c, --clean             : Clean working directory" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
     	return EXIT_SUCCESS;
     }
@@ -131,8 +131,12 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch"))
+    if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch")) {
         optFetchOnly = true;
+        singleTarget.assign(cmdOptions.getCmdOption("-f"));
+        if (singleTarget.empty())
+            singleTarget.assign(cmdOptions.getCmdOption("--fetch"));
+    }
 
     if (cmdOptions.cmdOptionExists("-g"))
         optGenerateOnly = true;
@@ -213,7 +217,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    scriptGenerator::fetch(fwrt);
+    scriptGenerator::fetch(fwrt, singleTarget);
 
     scriptGenerator::build(fwrt, singleTarget);
 
@@ -224,11 +228,11 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
 
     if (!optBuildOnly) {
-        // fetch may return non success - but it is not neccessarily critical
-        runScript(SCRIPT_CMD_FETCH);
-
-        if (optFetchOnly)
-            return EXIT_SUCCESS;
+        if (!runScript(SCRIPT_CMD_FETCH)) {
+            cerr << termcolor::red << "Error fetching target" << termcolor::reset << endl;
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
     }
 
     if (!runScript(SCRIPT_CMD_BUILD)) {
