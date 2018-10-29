@@ -7,7 +7,8 @@
 #define BUILD "build_targets"
 #define RELEASE "release_targets"
 
-#define BUILDDIR "workdir"
+#define BUILDDIR "sources"
+
 #define SCRIPT_FETCH BUILDDIR PLT_SLASH FETCH "." PLT_SUFFIX
 #define SCRIPT_BUILD BUILDDIR PLT_SLASH BUILD "." PLT_SUFFIX
 #define SCRIPT_RELEASE BUILDDIR PLT_SLASH RELEASE "." PLT_SUFFIX
