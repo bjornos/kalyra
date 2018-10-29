@@ -232,8 +232,10 @@ int main(int argc, char *argv[])
             cerr << termcolor::red << "Error fetching target" << termcolor::reset << endl;
             return EXIT_FAILURE;
         }
-        return EXIT_SUCCESS;
     }
+
+    if (optFetchOnly)
+        return EXIT_SUCCESS;
 
     if (!runScript(SCRIPT_CMD_BUILD)) {
         cerr << termcolor::red << "Abort!" << termcolor::reset << endl;
