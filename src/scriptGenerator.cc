@@ -126,9 +126,14 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
     script.close();
 }
 
-void scriptGenerator::release(unique_ptr<firmwareRelease>& release,const string& manifest)
+void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string& manifest)
 {
+    const string buildLog = BUILDDIR PLT_SLASH "releaseVersions.txt";
     std::ofstream script(SCRIPT_RELEASE, std::ios_base::binary | std::ios_base::out);
+    std::ofstream log(buildLog, std::ios_base::binary | std::ios_base::out);
+
+    log << "cat relKalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
+    log.close();
 
     if (isWindows) {
         script << "@echo off" << endl;
@@ -150,8 +155,8 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release,const string&
             << " || exit 1" << endl;
 
 
-
     script << "cd .." << endl;
+    script << "cp -v " << buildLog << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << buildLog << " || exit 1" << endl;
     script << "cp -v " << manifest << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << manifest << " || exit 1" << endl;
 
     script << "echo git tag -a " << release->getReleasePrefix() << endl;
