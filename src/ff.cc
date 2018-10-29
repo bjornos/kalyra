@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
     scriptGenerator::build(fwrt, singleTarget);
 
     if (optFwrt)
-        scriptGenerator::release(fwrt);
+        scriptGenerator::release(fwrt, fileName);
 
     if (optGenerateOnly)
         return EXIT_SUCCESS;

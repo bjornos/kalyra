@@ -126,7 +126,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
     script.close();
 }
 
-void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
+void scriptGenerator::release(unique_ptr<firmwareRelease>& release,const string& manifest)
 {
     std::ofstream script(SCRIPT_RELEASE, std::ios_base::binary | std::ios_base::out);
 
@@ -149,7 +149,11 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
             release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << (release->getReleaseComponents())->getFileName(file) \
             << " || exit 1" << endl;
 
+
+
     script << "cd .." << endl;
+    script << "cp -v " << manifest << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << manifest << " || exit 1" << endl;
+
     script << "echo git tag -a " << release->getReleasePrefix() << endl;
     script << "echo git push origin " << release->getReleasePrefix() << endl;
 

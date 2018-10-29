@@ -25,5 +25,5 @@ public:
 
     static void fetch(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget);
     static void build(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget);
-    static void release(std::unique_ptr<firmwareRelease>& release);
+    static void release(std::unique_ptr<firmwareRelease>& release, const std::string& manifest);
 };
