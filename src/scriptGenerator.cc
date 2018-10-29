@@ -65,7 +65,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
                 script << "IF NOT EXIST " << entry->getRoot() << " (" << gitClone(entry) << " || exit 1)";
                 script << " ELSE (@echo  **** Using local mirror)" << endl;
             } else {
-                script << "if [ -f " << entry->getRoot() << " ]; then" << endl;
+                script << "if [ -d " << entry->getRoot() << " ]; then" << endl;
                 script << "echo  \" **** Using local mirror\"" << endl;
                 script << "else"  << endl;
                 script << gitClone(entry)  << "|| exit 1" << endl << "fi" << endl;
