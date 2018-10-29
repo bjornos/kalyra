@@ -63,15 +63,16 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
             script << std::endl;
 
             if (isWindows) {
-                script << wat << "IF NOT EXIST ." << entry->getName() << "-fetched (" << gitClone(entry) << ")";
+                script << wat << "IF NOT EXIST ." << entry->getRoot() << "-fetched (" << gitClone(entry) << " || exit 1)";
                 script << " ELSE (@echo  **** Using local mirror)" << endl;
             } else {
-                script << "if [ -ne ." << entry->getName() << "-fetched ]" << endl;
-                script << gitClone(entry)  << endl;
-                script << "else echo  **** Using local mirror" << endl;
+                script << "if [ -f ." << entry->getRoot() << "-fetched ]; then" << endl;
+                script << "echo  \" **** Using local mirror\"" << endl;
+                script << "else"  << endl;
+                script << gitClone(entry)  << "|| exit 1" << endl << "fi" << endl;
             }
 
-            script << wat << "touch ." << entry->getName() << "-fetched" << endl;
+            script << wat << "touch ." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         } else if (singleTarget.compare(entry->getName()) == 0) {
             // Fetch only one recipe component
@@ -84,12 +85,13 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
 
 
             if (isWindows) {
-                script << wat << "IF EXIST " << entry->getName() << " rm -rf " << entry->getName() << endl;
+                script << wat << "IF EXIST " << entry->getRoot() << " rm -rf " << entry->getRoot() << endl;
             } else {
-                script << "rm -rf " << entry->getName() << endl;
+                cout << "removing!";
+                script << "rm -rf " << entry->getRoot() << endl;
             }
             script << wat << gitClone(entry) << " || exit 1" << endl;
-            script << wat << "touch ." << entry->getName() << "-fetched" << endl;
+            script << wat << "touch ." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         }
     }
