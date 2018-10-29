@@ -145,7 +145,7 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
     }
 
     for (auto& file : (release->getReleaseComponents())->getComponents())
-            script << "cp -v " << file << " " << \
+            script << "cp -rfv " << file << " " << \
             release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << (release->getReleaseComponents())->getFileName(file) \
             << " || exit 1" << endl;
 
