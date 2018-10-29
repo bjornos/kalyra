@@ -36,26 +36,25 @@ const string gitClone(std::unique_ptr<packageRecipe> &entry)
 void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& singleTarget)
 {
     std::ofstream script(SCRIPT_FETCH, std::ios_base::binary | std::ios_base::out);
-    string wat = "";
     string comment = "# ";
     bool targetFetch = false;
 
     if (isWindows) {
-        wat = "@";
         comment.assign("REM ");
-        script << wat << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
+        script << "@echo off";
+        script << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
-    script << wat << "cd " << BUILDDIR << " || exit 1"<< endl;
+    script << "cd " << BUILDDIR << " || exit 1"<< endl;
 
     for (auto& entry : release->getRecipes()) {
 
         if (singleTarget.empty()) {
             // The normal case - fetch all recipe components in manifest
-            script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
+            script << "echo  ---- Fetching " << entry->getName() << " revision=";
             if (!entry->getRev().empty())
                 script << entry->getRev();
             else
@@ -63,7 +62,7 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
             script << std::endl;
 
             if (isWindows) {
-                script << wat << "IF NOT EXIST ." << entry->getRoot() << "-fetched (" << gitClone(entry) << " || exit 1)";
+                script << "IF NOT EXIST ." << entry->getRoot() << "-fetched (" << gitClone(entry) << " || exit 1)";
                 script << " ELSE (@echo  **** Using local mirror)" << endl;
             } else {
                 script << "if [ -f ." << entry->getRoot() << "-fetched ]; then" << endl;
@@ -72,11 +71,11 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
                 script << gitClone(entry)  << "|| exit 1" << endl << "fi" << endl;
             }
 
-            script << wat << "touch ." << entry->getRoot() << "-fetched" << endl;
+            script << "touch ." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         } else if (singleTarget.compare(entry->getName()) == 0) {
             // Fetch only one recipe component
-            script << wat << "echo  ---- Fetching " << entry->getName() << " revision=";
+            script << "echo  ---- Fetching " << entry->getName() << " revision=";
             if (!entry->getRev().empty())
                 script << entry->getRev();
             else
@@ -85,19 +84,19 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
 
 
             if (isWindows) {
-                script << wat << "IF EXIST " << entry->getRoot() << " rm -rf " << entry->getRoot() << endl;
+                script << "IF EXIST " << entry->getRoot() << " rm -rf " << entry->getRoot() << endl;
             } else {
                 cout << "removing!";
                 script << "rm -rf " << entry->getRoot() << endl;
             }
-            script << wat << gitClone(entry) << " || exit 1" << endl;
-            script << wat << "touch ." << entry->getRoot() << "-fetched" << endl;
+            script << gitClone(entry) << " || exit 1" << endl;
+            script << "touch ." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         }
     }
 
     if (!targetFetch)
-        script << wat << comment << "No targets found. Thats an error." << endl << wat << "exit 1" << endl;
+        script << comment << "No targets found. Thats an error." << endl << "exit 1" << endl;
 
     script.close();
 }
@@ -105,27 +104,26 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
 void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& singleTarget)
 {
     std::ofstream script(SCRIPT_BUILD, std::ios_base::binary | std::ios_base::out);
-    string wat = "";
 
     if (isWindows) {
-        wat = "@";
-        script << wat << "if not exist " << BUILDDIR << " md " << BUILDDIR << endl;
+        script << "@echo off";
+        script << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
-    script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
+    script << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto& entry : release->getRecipes()) {
         if (singleTarget.empty() || (entry->getName().compare(singleTarget) == 0)) {
-            script << wat << "echo build " << entry->getName() << std::endl;
-            script << wat << "cd " << entry->getRoot() << " || exit 1" << std::endl;
+            script << "echo build " << entry->getName() << std::endl;
+            script << "cd " << entry->getRoot() << " || exit 1" << std::endl;
             for (auto& t : entry->getCmdList()) {
             if (!t.empty())
-                script << wat << t << " || exit 1" << endl;
+                script << t << " || exit 1" << endl;
             }
-            script << wat << "cd .." << std::endl;
+            script << "cd .." << std::endl;
         }
     }
 
@@ -135,30 +133,28 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
 void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
 {
     std::ofstream script(SCRIPT_RELEASE, std::ios_base::binary | std::ios_base::out);
-    string wat = "";
 
     if (isWindows) {
-        wat = "@";
-        script << wat << "if not exist " << release->getReleasePath() << " md " << release->getReleasePath() << endl;
-
+        script << "@echo off";
+        script << "IF NOT EXIST " << release->getReleasePath() << " md " << release->getReleasePath() << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << release->getReleasePath() << " || exit 1" << endl;
     }
 
-    script << wat << "cd " << BUILDDIR << " || exit 1" << endl;
+    script << "cd " << BUILDDIR << " || exit 1" << endl;
 
     for (auto c : (release->getReleaseComponents())->getPreCommands()) {
-        script << wat << c << " || exit 1" << std::endl;
+        script << c << " || exit 1" << std::endl;
     }
 
     for (auto& file : (release->getReleaseComponents())->getComponents())
-            script << wat << "cp -v " << file << " " << \
+            script << "cp -v " << file << " " << \
             release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << (release->getReleaseComponents())->getFileName(file) \
             << " || exit 1" << endl;
 
     for (auto cmd : (release->getReleaseComponents())->getPostCommands())
-        script << wat << cmd << " || exit 1" << std::endl;
+        script << cmd << " || exit 1" << std::endl;
 
     script.close();
 }
