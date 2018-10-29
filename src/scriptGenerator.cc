@@ -70,8 +70,6 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
                 script << "else"  << endl;
                 script << gitClone(entry)  << "|| exit 1" << endl << "fi" << endl;
             }
-
-            //script << "touch " << BUILDDIR << PLT_SLASH << "." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         } else if (singleTarget.compare(entry->getName()) == 0) {
             // Fetch only one recipe component
@@ -89,7 +87,6 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
                 script << "rm -rf " << entry->getRoot() << endl;
             }
             script << gitClone(entry) << " || exit 1" << endl;
-            //script << "touch " << BUILDDIR << PLT_SLASH << "." << entry->getRoot() << "-fetched" << endl;
             targetFetch = true;
         }
     }
@@ -151,6 +148,10 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release)
             script << "cp -v " << file << " " << \
             release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << (release->getReleaseComponents())->getFileName(file) \
             << " || exit 1" << endl;
+
+    script << "cd .." << endl;
+    script << "echo git tag -a " << release->getReleasePrefix() << endl;
+    script << "echo git push origin " << release->getReleasePrefix() << endl;
 
     for (auto cmd : (release->getReleaseComponents())->getPostCommands())
         script << cmd << " || exit 1" << std::endl;
