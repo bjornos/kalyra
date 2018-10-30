@@ -55,10 +55,11 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
         if (singleTarget.empty()) {
             // The normal case - fetch all recipe components in manifest
             script << "echo  ---- Fetching " << entry->getName() << " revision=";
-            if (!entry->getRev().empty())
+            if (!entry->getRev().empty()) {
                 script << entry->getRev();
-            else
+            } else {
                 script << "master";
+            }
             script << std::endl;
 
             if (isWindows) {
@@ -74,12 +75,12 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
         } else if (singleTarget.compare(entry->getName()) == 0) {
             // Fetch only one recipe component
             script << "echo  ---- Fetching " << entry->getName() << " revision=";
-            if (!entry->getRev().empty())
+            if (!entry->getRev().empty()) {
                 script << entry->getRev();
-            else
+            } else {
                 script << "master";
+            }
             script << " || exit 1 " << std::endl;
-
 
             if (isWindows) {
                 script << "IF EXIST " << entry->getRoot() << " rm -rf " << entry->getRoot() << endl;
@@ -132,7 +133,16 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
     std::ofstream script(SCRIPT_RELEASE, std::ios_base::binary | std::ios_base::out);
     std::ofstream log(buildLog, std::ios_base::binary | std::ios_base::out);
 
-    log << "cat relKalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
+    log << "Kalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
+    log << "Manifest: " << manifest << ": *FIXME: Unknown Hash*" << endl;
+
+    for (auto& entry : release->getRecipes()) {
+        log << entry->getName() << ": ";
+        if (entry->getRev().empty())
+            log << "master" << endl;
+        else
+            log << entry->getRev() << endl;
+    }
     log.close();
 
     if (isWindows) {
@@ -156,11 +166,14 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
 
 
     script << "cd .." << endl;
-    script << "cp -v " << buildLog << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << buildLog << " || exit 1" << endl;
-    script << "cp -v " << manifest << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << manifest << " || exit 1" << endl;
+    script << "cp -v " << buildLog << " " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << "Package_Revisions.txt" << " || exit 1" << endl;
 
-    script << "echo git tag -a " << release->getReleasePrefix() << endl;
-    script << "echo git push origin " << release->getReleasePrefix() << endl;
+    if (isWindows)
+        script << "IF EXIST RELEASENOTES.txt (cp -v RELEASENOTES.txt " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << "RELEASENOTES.txt)" << " || exit 1" << endl;
+
+
+    script << "git tag -a " << release->getReleasePrefix() << " -m \"Kalyra Release Auto Tag\" " << endl;
+    //script << "git push origin " << release->getReleasePrefix() << endl;
 
     for (auto cmd : (release->getReleaseComponents())->getPostCommands())
         script << cmd << " || exit 1" << std::endl;

@@ -20,7 +20,6 @@ public:
     std::vector<std::string>& getCmdList();
 
     std::string source;
-    std::string sha;
     std::string depends;
     std::string license;
 
@@ -28,6 +27,7 @@ private:
     std::string name;
     std::string revisionOverride;
     std::string revision;
+    std::string hash;
     std::string url;
     std::string root;
     std::string targetOverride;
