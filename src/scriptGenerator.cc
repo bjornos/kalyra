@@ -171,12 +171,22 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
     if (isWindows)
         script << "IF EXIST RELEASENOTES.txt (cp -v RELEASENOTES.txt " << release->getReleasePath() + PLT_SLASH + release->getReleasePrefix() << "_" << "RELEASENOTES.txt)" << " || exit 1" << endl;
 
-
-    script << "git tag -a " << release->getReleasePrefix() << " -m \"Kalyra Release Auto Tag\" " << endl;
-    //script << "git push origin " << release->getReleasePrefix() << endl;
-
     for (auto cmd : (release->getReleaseComponents())->getPostCommands())
         script << cmd << " || exit 1" << std::endl;
 
     script.close();
+}
+
+void scriptGenerator::gitTag(unique_ptr<firmwareRelease>& release)
+{
+    std::ofstream script(SCRIPT_GITTAG, std::ios_base::binary | std::ios_base::out);
+
+    if (isWindows) {
+        script << "@echo off" << endl;
+    } else {
+        script << "#!/bin/sh" << std::endl;
+    }
+
+    script << "git tag -a " << release->getReleasePrefix() << " -m \"Kalyra Release Auto Tag\" " << endl;
+    script << "git push origin " << release->getReleasePrefix() << endl;
 }

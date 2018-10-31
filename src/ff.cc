@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
     auto optBuildOnly = false;
     auto optFwrt = false;
     auto optClean = false;
+    auto optTagAuto = false;
 
     cout <<  termcolor::cyan << KALYRA_BANNER << " v" << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
         cout << "-b, --build <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
         cout << "-c, --clean             : Clean working directory" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
+        cout << "--tag,                  : Automatically set git tag after running firmware release tool." << endl;
     	return EXIT_SUCCESS;
     }
 
@@ -143,6 +145,9 @@ int main(int argc, char *argv[])
 
     if (cmdOptions.cmdOptionExists("--fwrt"))
         optFwrt = true;
+
+    if (cmdOptions.cmdOptionExists("--tag"))
+        optTagAuto = true;
 
     if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists("--build")) {
         optBuildOnly = true;
@@ -247,6 +252,24 @@ int main(int argc, char *argv[])
 
         if (!runScript(SCRIPT_CMD_RELEASE)) {
             cerr << termcolor::red << "Abort!" << termcolor::reset << endl;
+            return EXIT_FAILURE;
+        }
+
+        if (!optTagAuto) {
+            cout << "Files have been copied. Proceed and set git release tag? (Y/N): ";
+            char answer;
+            cin >> answer;
+
+            if ((answer != 'y') && (answer != 'Y')) {
+                cout << endl << "Skip git tag." << endl;
+                return EXIT_SUCCESS;
+            }
+        }
+
+        scriptGenerator::gitTag(fwrt);
+
+        if (!runScript(SCRIPT_CMD_GITTAG)) {
+            cerr << termcolor::red << "Failed to set git tag!" << termcolor::reset << endl;
             return EXIT_FAILURE;
         }
     }
