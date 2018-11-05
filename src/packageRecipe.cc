@@ -94,8 +94,10 @@ void packageRecipe::parseRecipe(unique_ptr<packageRecipe>& recipe)
     	realTarget = recipe->targetOverride;
 
     auto cmdList = cJSON_GetObjectItemCaseSensitive(buildPackage, realTarget.c_str());
-    if (cmdList == NULL)
-    	throw std::invalid_argument("No target found");
+    if (cmdList == NULL) {
+        auto errMsg(recipe->name + ": No target found.");
+        throw std::invalid_argument(errMsg);
+    }
 
     cJSON* cmd;
     cJSON_ArrayForEach(cmd, cmdList)
