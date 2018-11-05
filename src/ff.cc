@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
     auto optFwrt = false;
     auto optClean = false;
     auto optTagAuto = false;
+    auto optShowRecipes = false;
 
     cout <<  termcolor::cyan << KALYRA_BANNER << " v" << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
         cout << "-f, --fetch <recipe>    : Fetch recipe repository only. No argument means all recipes." << endl;
         cout << "-b, --build <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
         cout << "-c, --clean             : Clean working directory" << endl;
+        cout << "-r, --recipes           : Show avaiable recipes for current manifest" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
         cout << "--tag,                  : Automatically set git tag after running firmware release tool." << endl;
     	return EXIT_SUCCESS;
@@ -138,6 +140,10 @@ int main(int argc, char *argv[])
         singleTarget.assign(cmdOptions.getCmdOption("-f"));
         if (singleTarget.empty())
             singleTarget.assign(cmdOptions.getCmdOption("--fetch"));
+    }
+
+    if (cmdOptions.cmdOptionExists("-r") || cmdOptions.cmdOptionExists("--recipes")) {
+        optShowRecipes = true;
     }
 
     if (cmdOptions.cmdOptionExists("-g"))
@@ -190,6 +196,13 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
+    }
+
+    if (optShowRecipes) {
+        cout << termcolor::yellow << "Available recipes:" << termcolor::reset << endl;
+        for (auto& entry : recipes)
+            cout << entry->getName() << endl;
+        return EXIT_SUCCESS;
     }
 
     auto components(unique_ptr<releaseComponent>(manifest::loadComponents(recipes, manifest)));
