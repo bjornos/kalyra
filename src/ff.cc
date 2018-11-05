@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
         cout << "Copying release to server..." << endl;
 
         if (!runScript(SCRIPT_CMD_RELEASE)) {
-            cerr << termcolor::red << "Release Failed!" << termcolor::reset << endl;
+            cerr << termcolor::red << "Firmware release tool failed!" << termcolor::reset << endl;
             auto rmRelDir("rm -rf " + fwrt->getReleasePath());
             std::system(rmRelDir.c_str());
             return EXIT_FAILURE;

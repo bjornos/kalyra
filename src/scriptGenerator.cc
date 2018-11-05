@@ -134,7 +134,8 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
     std::ofstream log(buildLog, std::ios_base::binary | std::ios_base::out);
 
     log << "Kalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
-    log << "Manifest: " << manifest << ": *FIXME: Unknown Hash*" << endl;
+    log << "Compiler: " << "*FIXME Unknown compiler version*" << endl;
+    log << "Manifest: " << manifest << ": *FIXME unknown hash*" << endl;
 
     for (auto& entry : release->getRecipes()) {
         log << entry->getName() << ": ";
@@ -147,7 +148,8 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
 
     if (isWindows) {
         script << "@echo off" << endl;
-        script << "IF NOT EXIST " << release->getReleasePath() << " md " << release->getReleasePath() << endl;
+        script << "IF EXIST " << release->getReleasePath() << " (" << endl << "echo Fatal: Release already exists." << endl << "exit 1" << endl << ")" << endl;;
+        script << "md " << release->getReleasePath() << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
         script << "mkdir -p " << release->getReleasePath() << " || exit 1" << endl;
