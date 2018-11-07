@@ -32,7 +32,12 @@ void packageRecipe::parseRecipe(unique_ptr<packageRecipe>& recipe)
     std::ifstream r(RECIPE_DIRECTORY + recipe->name + RECIPE_SUFFIX);
     std::stringstream buffer;
 
-    buffer << r.rdbuf();
+    if (r.is_open())
+        buffer << r.rdbuf();
+    else {
+        const string error("cannot find recipe for " + recipe->name);
+        throw std:: invalid_argument(error);
+    }
 
     auto buildPackage = cJSON_Parse(buffer.str().c_str());
     if (buildPackage == NULL) {
