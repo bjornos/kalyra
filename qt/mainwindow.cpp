@@ -12,14 +12,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-    fwrt = false;
-    fetchOnly = false;
-    manifest = "";
-    ui->statusBar->showMessage("Ready.",0);
     this->setWindowTitle("Kalyra");
 
+    manifest = "";
 
+    fwrt = false;
+    optBuild = true;
+    optFetchOnly = false;
+    optClean = false;
+
+    ui->optBuild->setChecked(true);
+    ui->optFetchOnly->setChecked(false);
+    ui->optClean->setChecked(false);
+
+    ui->statusBar->showMessage("Ready.", 0);
 }
 
 MainWindow::~MainWindow()
@@ -43,18 +49,14 @@ void MainWindow::loadFile() {
           }
       }
 
-     manifest = fileName;
+    manifest = fileName;
+    ui->statusBar->showMessage("Loaded manifest", 2000);
 
-    QFileInfo info1(fileName);
+    QFileInfo mInfo(fileName);
 
-    ui->statusBar->showMessage("Loaded manifest",2000);
-    this->setWindowTitle("Kalyra - " + info1.fileName());
-
-    manifestPath = info1.absolutePath();
-    ui->txtCurrManifest->setText(info1.fileName());
-
-
-
+    this->setWindowTitle("Kalyra - " + mInfo.fileName());
+    manifestPath = mInfo.absolutePath();
+    ui->txtCurrManifest->setText(mInfo.fileName());
 }
 
 
@@ -65,51 +67,90 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_commandLinkButton_clicked()
 {
-    if (manifest == "")
+    ui->textBrowser->setText("Working. This may take a while...");
+
+    if (manifest == "") {
         ui->statusBar->showMessage("No manifest loaded",2000);
-    else {
-        QProcess process;
-        QStringList com;
-
-        com.append("-g");
-        com.append("-m");
-        com.append(manifest);
-
-        //if (fetchOnly)
-          //  com.append("-f");
-
-        process.setWorkingDirectory(manifestPath);
-
-        process.start("ff", com);
-
-
-
-        process.waitForFinished(-1);
-
-        QString output(process.readAllStandardOutput());
-QString stderr(process.readAllStandardError());
-
-ui->textBrowser->setText(output +  stderr);//   ->setText(output + stderr);
-
-
-
-        qDebug() << output;
-            qDebug() << stderr;
+        QMessageBox::critical(NULL, QString(), tr("No manifest loaded.\n"));
+        return;
     }
+    QProcess process;
+    QStringList argList;
+
+    argList.append("-m");
+    argList.append(manifest);
+
+    if (optFetchOnly)
+        argList.append("-f");
+
+    if (optClean)
+        argList.append("-c");
+
+    process.setWorkingDirectory(manifestPath);
+
+    process.start("ff", argList);
+
+    ui->statusBar->showMessage("Running the Firmware Factory - This can take a few minutes...", 0);
+
+    process.waitForFinished(-1);
+
+    QString output(process.readAllStandardOutput());
+    if (output == "") {
+        ui->statusBar->showMessage("Could not find program ff", 5000);
+        QMessageBox::critical(NULL, QString(), tr("Unable to find/run firmware factory\n"));
+        return;
+    }
+    QString errOut(process.readAllStandardError());
+
+    ui->textBrowser->setText(output + errOut);
+
+    ui->statusBar->showMessage("Firmware Factory finished executing.", 10000);
+
+    qDebug() << output;
+    qDebug() << errOut;
 }
 
 
 void MainWindow::on_pushButton_released()
 {
-    //ui->label->setText(("Clicled"));
+
 }
 
-void MainWindow::on_checkBox_clicked()
+void MainWindow::on_optFWRT_clicked()
 {
-    fwrt = true;
+    fwrt = fwrt ? false : true;
 }
 
-void MainWindow::on_fetchOnly_clicked()
+void MainWindow::on_optBuild_clicked()
 {
-    fetchOnly = true;
+    optBuild = true;
+    optFetchOnly = false;
+    optClean = false;
+
+    ui->optBuild->setChecked(true);
+    ui->optFetchOnly->setChecked(false);
+    ui->optClean->setChecked(false);
 }
+
+void MainWindow::on_optFetchOnly_clicked()
+{
+    optBuild = true;
+    optFetchOnly = true;
+    optClean = false;
+
+    ui->optBuild->setChecked(false);
+    ui->optFetchOnly->setChecked(true);
+    ui->optClean->setChecked(false);
+}
+
+void MainWindow::on_optClean_clicked()
+{
+    optBuild = false;
+    optFetchOnly = false;
+    optClean = true;
+
+    ui->optBuild->setChecked(false);
+    ui->optFetchOnly->setChecked(false);
+    ui->optClean->setChecked(true);
+}
+

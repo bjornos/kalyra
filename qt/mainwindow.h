@@ -19,18 +19,22 @@ public:
 
     QString manifest;
     bool fwrt;
-    bool fetchOnly;
+    bool optFetchOnly;
+    bool optClean;
+    bool optBuild;
 
 private slots:
     void on_pushButton_clicked();
 
-    void on_fetchOnly_clicked();
+    void on_optFetchOnly_clicked();
+    void on_optClean_clicked();
+    void on_optBuild_clicked();
 
     void on_commandLinkButton_clicked();
 
     void on_pushButton_released();
 
-    void on_checkBox_clicked();
+    void on_optFWRT_clicked();
 
 private:
     Ui::MainWindow *ui;
