@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     auto optBuildOnly = false;
     auto optFwrt = false;
     auto optClean = false;
-    auto optTagAuto = false;
+    auto optYes = false;
     auto optShowRecipes = false;
 
     cout <<  termcolor::cyan << KALYRA_BANNER << " v" << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
         cout << "-c, --clean             : Clean working directory" << endl;
         cout << "-r, --recipes           : Show avaiable recipes for current manifest" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
-        cout << "--tag,                  : Automatically set git tag after running firmware release tool." << endl;
+        cout << "--yes,                  : Don't stop and wait for user input, assume yes on all." << endl;
     	return EXIT_SUCCESS;
     }
 
@@ -153,8 +153,8 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("--fwrt"))
         optFwrt = true;
 
-    if (cmdOptions.cmdOptionExists("--tag"))
-        optTagAuto = true;
+    if (cmdOptions.cmdOptionExists("--yes"))
+        optYes = true;
 
     if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists("--build")) {
         optBuildOnly = true;
@@ -220,13 +220,15 @@ int main(int argc, char *argv[])
         cout << "Release Path: " << termcolor::yellow << fwrt->getReleasePath() << \
             termcolor::reset << endl << endl;
 
-        cout << "Are you sure about this? (Y/N): ";
-        char answer;
-        cin >> answer;
-        cout << "answer: " << answer << endl;
-        if ((answer != 'y') && (answer != 'Y')) {
-            cout << endl << "Bailing out." << endl;
-            return EXIT_SUCCESS;
+        if (!optYes) {
+            cout << "Are you sure about this? (Y/N): ";
+            char answer;
+            cin >> answer;
+            cout << "answer: " << answer << endl;
+            if ((answer != 'y') && (answer != 'Y')) {
+                cout << endl << "Bailing out." << endl;
+                return EXIT_SUCCESS;
+            }
         }
     }
 
@@ -273,7 +275,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        if (!optTagAuto) {
+        if (!optYes) {
             cout << "Files have been copied. Proceed and set git release tag? (Y/N): ";
             char answer;
             cin >> answer;
