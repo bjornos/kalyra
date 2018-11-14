@@ -9,7 +9,7 @@
 class firmwareRelease { 
 public:
     firmwareRelease(std::string name, std::string release, std::string stage,
-        std::string build, std::string path, std::vector<std::unique_ptr<packageRecipe>> recipes,
+        std::string build, std::string path, std::string env, std::vector<std::unique_ptr<packageRecipe>> recipes,
         std::unique_ptr<releaseComponent> components);
     ~firmwareRelease() {};
 
@@ -17,6 +17,7 @@ public:
     std::string& getRelease();
     std::string& getStage();
     std::string& getBuild();
+    std::string& getEnv();
 
     std::vector<std::unique_ptr<packageRecipe>>& getRecipes();
     std::unique_ptr<releaseComponent>& getReleaseComponents();
@@ -24,13 +25,13 @@ public:
     std::string getReleasePrefix();
     std::string getReleasePath();
 
-
 private:
     std::string name;
     std::string release;
     std::string stage;
     std::string build;
     std::string releasePath;
+    std::string environment;
     std::vector<std::unique_ptr<packageRecipe>> recipes;
     std::unique_ptr<releaseComponent> releaseComponents;
 };

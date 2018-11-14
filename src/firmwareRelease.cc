@@ -23,6 +23,12 @@ string& firmwareRelease::getBuild()
     return build;
 }
 
+string& firmwareRelease::getEnv()
+{
+    return environment;
+}
+
+
 vector<std::unique_ptr<packageRecipe>>& firmwareRelease::getRecipes()
 {
     return recipes;
@@ -45,12 +51,14 @@ string firmwareRelease::getReleasePath()
 }
 
 firmwareRelease::firmwareRelease(string name, string release, string stage, string build, string path,
-    std::vector<std::unique_ptr<packageRecipe>> recipes, std::unique_ptr<releaseComponent> components) :
+	string env, std::vector<std::unique_ptr<packageRecipe>> recipes,
+	std::unique_ptr<releaseComponent> components) :
     name(name),
     release(release),
     stage(stage),
     build(build),
     releasePath(path),
+    environment(env),
     recipes(move(recipes)),
     releaseComponents(move(components))
 {

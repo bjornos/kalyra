@@ -42,9 +42,15 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
     if (isWindows) {
         comment.assign("REM ");
         script << "@echo off" << endl;
+        script << "SETLOCAL" << endl;
+        if (!release->getEnv().empty())
+            script << "SET " << release->getEnv() << endl;
+
         script << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
+        if (!release->getEnv().empty())
+            script << "export "  << release->getEnv() << endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
@@ -104,9 +110,15 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
 
     if (isWindows) {
         script << "@echo off" << endl;
+        script << "SETLOCAL" << endl;
+        if (!release->getEnv().empty())
+            script << "SET " << release->getEnv() << endl;
+
         script << "IF NOT EXIST " << BUILDDIR << " md " << BUILDDIR << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
+        if (!release->getEnv().empty())
+            script << "export "  << release->getEnv() << endl;
         script << "mkdir -p " << BUILDDIR <<"\n";
     }
 
@@ -148,10 +160,15 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
 
     if (isWindows) {
         script << "@echo off" << endl;
+        script << "SETLOCAL" << endl;
+        if (!release->getEnv().empty())
+            script << "SET "  << release->getEnv() << endl;
         script << "IF EXIST " << release->getReleasePath() << " (" << endl << "echo Fatal: Release already exists." << endl << "exit 1" << endl << ")" << endl;;
         script << "md " << release->getReleasePath() << endl;
     } else {
         script << "#!/bin/sh" << std::endl;
+        if (!release->getEnv().empty())
+            script << "export "  << release->getEnv() << endl;
         script << "mkdir -p " << release->getReleasePath() << " || exit 1" << endl;
     }
 

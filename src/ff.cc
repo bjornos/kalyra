@@ -41,6 +41,7 @@ constexpr auto TAG_RELEASE = "release";
 constexpr auto TAG_STAGE = "stage";
 constexpr auto TAG_BUILD = "build";
 constexpr auto TAG_PATH = "release-path";
+constexpr auto TAG_ENVIRONMENT = "environment";
 constexpr auto TAG_PACKAGES = "packages";
 
 int createDir(const string& dir)
@@ -179,6 +180,7 @@ int main(int argc, char *argv[])
     const auto stage = manifest::getValue(manifest, TAG_STAGE);
     const auto build = manifest::getValue(manifest, TAG_BUILD);
     const auto rPath = manifest::getValue(manifest, TAG_PATH);
+    const auto env = manifest::getValue(manifest, TAG_ENVIRONMENT);
 
     vector<unique_ptr<packageRecipe>> recipes;
     try {
@@ -208,7 +210,8 @@ int main(int argc, char *argv[])
     auto components(unique_ptr<releaseComponent>(manifest::loadComponents(recipes, manifest)));
 
     auto fwrt(unique_ptr<firmwareRelease>(new firmwareRelease(product->valuestring,
-        release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring, move(recipes), move(components))));
+        release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring,
+        env->valuestring, move(recipes), move(components))));
 
     if (optFwrt) {
         cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
