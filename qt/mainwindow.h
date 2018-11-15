@@ -18,7 +18,6 @@ public:
     void loadFile();
 
     QString manifest;
-    bool fwrt;
     bool optFetchOnly;
     bool optClean;
     bool optBuild;
@@ -33,8 +32,6 @@ private slots:
     void on_commandLinkButton_clicked();
 
     void on_pushButton_released();
-
-    void on_optFWRT_clicked();
 
 private:
     Ui::MainWindow *ui;

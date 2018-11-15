@@ -16,7 +16,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     manifest = "";
 
-    fwrt = false;
     optBuild = true;
     optFetchOnly = false;
     optClean = false;
@@ -24,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->optBuild->setChecked(true);
     ui->optFetchOnly->setChecked(false);
     ui->optClean->setChecked(false);
+
 
     ui->statusBar->showMessage("Ready.", 0);
 }
@@ -114,11 +114,6 @@ void MainWindow::on_commandLinkButton_clicked()
 void MainWindow::on_pushButton_released()
 {
 
-}
-
-void MainWindow::on_optFWRT_clicked()
-{
-    fwrt = fwrt ? false : true;
 }
 
 void MainWindow::on_optBuild_clicked()
