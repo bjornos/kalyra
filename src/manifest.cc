@@ -44,7 +44,7 @@ void manifest::loadHeader(const cJSON*& m, const string& manifest)
     }
 }
 
-vector<unique_ptr<packageRecipe>> manifest::loadTargets(const cJSON* manifest)
+vector<unique_ptr<packageRecipe>> manifest::loadRecipes(const cJSON* manifest)
 {
     const cJSON* package;
     vector<unique_ptr<packageRecipe>> recipes;
@@ -72,6 +72,42 @@ vector<unique_ptr<packageRecipe>> manifest::loadTargets(const cJSON* manifest)
         auto p(unique_ptr<packageRecipe>(new packageRecipe(recipe->valuestring, revOverride, targetOverride)));
 
         recipes.emplace_back(move(p));
+    }
+
+    //
+    // recursive parse any imported manifest for additional recipes
+    //
+    bool importManifest = true;
+    vector<string> imports;
+
+    while (importManifest == true) {
+        auto imp = cJSON_GetObjectItemCaseSensitive(manifest, "import");
+        if (imp == NULL) {
+            // No import field
+            importManifest = false;
+            continue;
+        }
+
+        for (auto& i : imports) {
+            if (i.compare(imp->valuestring) == 0) {
+                // Imported already
+                importManifest = false;
+                continue;
+            }
+        }
+
+        if (importManifest) {
+            const cJSON* import;
+            imports.emplace_back(imp->valuestring);
+
+            manifest::loadHeader(import, imp->valuestring);
+            vector<unique_ptr<packageRecipe>> importRecipe;
+
+            importRecipe = manifest::loadRecipes(import);
+            for (auto& r : importRecipe) {
+                recipes.emplace_back(move(r));
+            }
+        }
     }
 
     return recipes;

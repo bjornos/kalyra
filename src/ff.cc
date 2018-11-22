@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 
     vector<unique_ptr<packageRecipe>> recipes;
     try {
-        recipes = manifest::loadTargets(manifest);
+        recipes = manifest::loadRecipes(manifest);
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
         return EXIT_FAILURE;
