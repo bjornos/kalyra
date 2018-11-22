@@ -2,7 +2,7 @@
 
 #define KALYRA_MAJOR "1"
 #define KALYRA_MINOR "0"
-#define KALYRA_SUB  "3"
+#define KALYRA_SUB  "4"
 #define KALYRA_BANNER "Kalyra Build System"
 
 #if defined(_WIN32) || defined(_WIN64)
