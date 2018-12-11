@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdlib>
 
+#define OPT_BUILD_LONG "--build"
+
 // this class was found on stackoverflow
 // https://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
 class InputParser{

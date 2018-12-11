@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
         cout << "-g, --generate          : Generate build scripts only" << endl;
         cout << "-f, --fetch <recipe>    : Fetch recipe repository only. No argument means all recipes." << endl;
-        cout << "-b, --build <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
+        cout << "-b, " << OPT_BUILD_LONG << " <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
         cout << "-c, --clean             : Clean working directory" << endl;
         cout << "-r, --recipes           : Show avaiable recipes for current manifest" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
@@ -156,11 +156,11 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("--yes"))
         optYes = true;
 
-    if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists("--build")) {
+    if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists(OPT_BUILD_LONG)) {
         optBuildOnly = true;
         singleTarget.assign(cmdOptions.getCmdOption("-b"));
         if (singleTarget.empty()) {
-            singleTarget.assign(cmdOptions.getCmdOption("--build"));
+            singleTarget.assign(cmdOptions.getCmdOption(OPT_BUILD_LONG));
         }
     }
 

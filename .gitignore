@@ -1,3 +1,4 @@
+tests/inputParser
 *.a
 *.cmake
 *.exe
