@@ -16,7 +16,6 @@ const cJSON* manifest::getValue(const cJSON* recipe, string tag)
     if (cJSON_HasObjectItem(recipe, tag.c_str())) {
         entry = cJSON_GetObjectItemCaseSensitive(recipe, tag.c_str());
     } else {
-        cerr << "Warning: Could not find component '" << tag << "'." << endl;
         entry = cJSON_CreateString("Unknown");
     }
 
