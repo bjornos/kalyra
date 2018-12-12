@@ -213,6 +213,12 @@ int main(int argc, char *argv[])
         release->valuestring, stage->valuestring, build->valuestring, rPath->valuestring,
         env->valuestring, move(recipes), move(components))));
 
+
+    if ((optBuildOnly) && (singleTarget.empty() == false) && (fwrt->hasRecipe(singleTarget) == false)) {
+        cerr << termcolor::red << "Could not find any recipe for '" << singleTarget << "'" << termcolor::reset << endl;
+        return EXIT_FAILURE;
+    }
+
     if (optFwrt) {
         cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
             << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;

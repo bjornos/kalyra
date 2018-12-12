@@ -50,6 +50,17 @@ string firmwareRelease::getReleasePath()
          stage + PLT_SLASH + getReleasePrefix();
 }
 
+bool firmwareRelease::hasRecipe(string& recipe)
+{
+    for (auto& r : recipes) {
+        if (r->getName().compare(recipe) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 firmwareRelease::firmwareRelease(string name, string release, string stage, string build, string path,
 	string env, std::vector<std::unique_ptr<packageRecipe>> recipes,
 	std::unique_ptr<releaseComponent> components) :
