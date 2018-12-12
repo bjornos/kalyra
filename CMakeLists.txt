@@ -13,6 +13,8 @@ link_directories(lib/cJSON)
 
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(tests)
+IF (UNIX)
+	enable_testing()
+	add_subdirectory(tests)
+ENDIF()
 
