@@ -81,10 +81,12 @@ int main(int argc, char *argv[])
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
     string singleTarget;
+    string singleTargetUpdate;
     string releasePrefix;
     auto optFetchOnly = false;
     auto optGenerateOnly = false;
     auto optBuildOnly = false;
+    auto optUpdate = false;
     auto optFwrt = false;
     auto optClean = false;
     auto optYes = false;
@@ -97,11 +99,12 @@ int main(int argc, char *argv[])
     if (cmdOptions.cmdOptionExists("--help")){
     	cout << "Available command options:" << endl;
         cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
-        cout << "-g, --generate          : Generate build scripts only" << endl;
         cout << "-f, --fetch <recipe>    : Fetch recipe repository only. No argument means all recipes." << endl;
         cout << "-b, " << OPT_BUILD_LONG << " <recipe>    : Build recipe only. If no recipe is stated, all recipes are built." << endl;
+        cout << OPT_UPDATE_SHORT << ", " << OPT_UPDATE_LONG << " <recipe>   : " << OPT_UPDATE_DESC << endl;
         cout << "-c, --clean             : Clean working directory" << endl;
         cout << "-r, --recipes           : Show avaiable recipes for current manifest" << endl;
+        cout << "-g, --generate          : Generate build scripts only" << endl;
         cout << "--fwrt                  : Firmware Release Tool. Generate a official release after building all components." << endl;
         cout << "--yes,                  : Don't stop and wait for user input, assume yes on all." << endl;
     	return EXIT_SUCCESS;
@@ -162,6 +165,16 @@ int main(int argc, char *argv[])
         if (singleTarget.empty()) {
             singleTarget.assign(cmdOptions.getCmdOption(OPT_BUILD_LONG));
         }
+    }
+
+    if (cmdOptions.cmdOptionExists(OPT_UPDATE_SHORT) || cmdOptions.cmdOptionExists(OPT_UPDATE_LONG)) {
+        optUpdate = true;
+        // Doing an update does not trigger any builds unless implicitly specified
+        if (!optBuildOnly)
+            optFetchOnly = true;
+        singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_SHORT));
+        if (singleTargetUpdate.empty())
+            singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_LONG));
     }
 
     cout << "Processing " << fileName << "... " << endl << endl;
@@ -246,7 +259,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    scriptGenerator::fetch(fwrt, singleTarget);
+    scriptGenerator::fetch(fwrt, singleTarget, optUpdate, singleTargetUpdate);
 
     scriptGenerator::build(fwrt, singleTarget);
 

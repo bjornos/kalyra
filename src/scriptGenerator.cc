@@ -33,11 +33,12 @@ const string gitClone(std::unique_ptr<packageRecipe> &entry)
     return clone;
 }
 
-void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& singleTarget)
+void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& singleTarget, bool update, const string& updateTarget)
 {
     std::ofstream script(SCRIPT_FETCH, std::ios_base::binary | std::ios_base::out);
     string comment = "# ";
-    bool targetFetch = false;
+    auto targetFetch = false;
+    auto updateAll = (update && updateTarget.empty());
 
     if (isWindows) {
         comment.assign("REM ");
@@ -69,10 +70,22 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
             script << std::endl;
 
             if (isWindows) {
-                script << "IF NOT EXIST " << entry->getRoot() << " (" << gitClone(entry) << " || exit 1)";
-                script << " ELSE (@echo  **** Using local mirror)" << endl;
+                script << "IF NOT EXIST " << entry->getRoot() << " (" << gitClone(entry) << " || exit 1)" << endl;
+                if (update) {
+                    if (updateAll || (entry->getName().compare(updateTarget) == 0)) {
+                        script << "echo *** Updating " << entry->getName() << endl;
+                        script << "cd " << entry->getRoot() << " || exit 1" << endl;
+                        script << "git fetch && git checkout " << entry->getRev() << " || exit 1" << endl;
+                        script << "cd.." << " || exit 1" << endl;
+                    }
+                } else {
+                    script << " ELSE (@echo  **** Using local mirror)" << endl;
+                }
             } else {
                 script << "if [ -d " << entry->getRoot() << " ]; then" << endl;
+                if (update) {
+                    script << "echo ======= FIXME: Implement --update option for Unix" << endl;
+                }
                 script << "echo  \" **** Using local mirror\"" << endl;
                 script << "else"  << endl;
                 script << gitClone(entry)  << "|| exit 1" << endl << "fi" << endl;

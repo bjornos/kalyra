@@ -24,7 +24,7 @@ public:
     scriptGenerator();
     ~scriptGenerator();
 
-    static void fetch(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget);
+    static void fetch(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget, bool update, const std::string& updateTarget);
     static void build(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget);
     static void release(std::unique_ptr<firmwareRelease>& release, const std::string& manifest);
     static void gitTag(std::unique_ptr<firmwareRelease>& release);

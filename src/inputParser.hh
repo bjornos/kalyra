@@ -4,7 +4,11 @@
 #include <vector>
 #include <cstdlib>
 
-#define OPT_BUILD_LONG "--build"
+#define OPT_BUILD_LONG   "--build"
+
+#define OPT_UPDATE_SHORT "-u"
+#define OPT_UPDATE_LONG  "--update"
+#define OPT_UPDATE_DESC   "Update sources with latest changes on remote repository for appointed branch. If no recipe is stated, all repositories are updated."
 
 // this class was found on stackoverflow
 // https://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
