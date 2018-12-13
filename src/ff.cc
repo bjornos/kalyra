@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     const cJSON* manifest;
     InputParser cmdOptions(argc, argv);
     string singleTarget;
+    string singleTargetFetch;
     string singleTargetUpdate;
     string releasePrefix;
     auto optFetchOnly = false;
@@ -141,9 +142,14 @@ int main(int argc, char *argv[])
 
     if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch")) {
         optFetchOnly = true;
-        singleTarget.assign(cmdOptions.getCmdOption("-f"));
-        if (singleTarget.empty())
-            singleTarget.assign(cmdOptions.getCmdOption("--fetch"));
+        singleTargetFetch.assign(cmdOptions.getCmdOption("-f"));
+        if (singleTargetFetch.empty()) {
+            singleTargetFetch.assign(cmdOptions.getCmdOption("--fetch"));
+        }
+
+        // Handle the case where next command line option could be treated as recipe argument
+        if (!singleTargetFetch.empty() && singleTargetFetch[0] == '-')
+            singleTargetFetch.assign("");
     }
 
     if (cmdOptions.cmdOptionExists("-r") || cmdOptions.cmdOptionExists("--recipes")) {
@@ -165,6 +171,9 @@ int main(int argc, char *argv[])
         if (singleTarget.empty()) {
             singleTarget.assign(cmdOptions.getCmdOption(OPT_BUILD_LONG));
         }
+
+        if (!singleTarget.empty() && singleTarget[0] == '-')
+            singleTarget.assign("");
     }
 
     if (cmdOptions.cmdOptionExists(OPT_UPDATE_SHORT) || cmdOptions.cmdOptionExists(OPT_UPDATE_LONG)) {
@@ -173,8 +182,13 @@ int main(int argc, char *argv[])
         if (!optBuildOnly)
             optFetchOnly = true;
         singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_SHORT));
-        if (singleTargetUpdate.empty())
+        if (singleTargetUpdate.empty()) {
             singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_LONG));
+        }
+
+        if (!singleTargetUpdate.empty() && singleTargetUpdate[0] == '-')
+            singleTargetUpdate.assign("");
+
     }
 
     cout << "Processing " << fileName << "... " << endl << endl;
@@ -259,7 +273,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    scriptGenerator::fetch(fwrt, singleTarget, optUpdate, singleTargetUpdate);
+    scriptGenerator::fetch(fwrt, singleTargetFetch, optUpdate, singleTargetUpdate);
 
     scriptGenerator::build(fwrt, singleTarget);
 
@@ -269,7 +283,7 @@ int main(int argc, char *argv[])
     if (optGenerateOnly)
         return EXIT_SUCCESS;
 
-    if (!optBuildOnly) {
+    if ((!optBuildOnly || optUpdate) || optFetchOnly) {
         if (!runScript(SCRIPT_CMD_FETCH)) {
             cerr << termcolor::red << "Error fetching target" << termcolor::reset << endl;
             return EXIT_FAILURE;

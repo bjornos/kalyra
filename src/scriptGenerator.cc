@@ -70,17 +70,20 @@ void scriptGenerator::fetch(unique_ptr<firmwareRelease>& release, const string& 
             script << std::endl;
 
             if (isWindows) {
-                script << "IF NOT EXIST " << entry->getRoot() << " (" << gitClone(entry) << " || exit 1)" << endl;
+                script << "IF NOT EXIST " << entry->getRoot() << " (" << gitClone(entry) << " || exit 1)";
                 if (update) {
                     if (updateAll || (entry->getName().compare(updateTarget) == 0)) {
-                        script << "echo *** Updating " << entry->getName() << endl;
+                        script << endl << "echo  **** Updating " << entry->getName() << endl;
                         script << "cd " << entry->getRoot() << " || exit 1" << endl;
                         script << "git fetch && git checkout " << entry->getRev() << " || exit 1" << endl;
                         script << "cd.." << " || exit 1" << endl;
+                    } else {
+                        script << endl << "echo  **** Using local mirror";
                     }
                 } else {
-                    script << " ELSE (@echo  **** Using local mirror)" << endl;
+                    script << " ELSE (@echo  **** Using local mirror)";
                 }
+                script << endl;
             } else {
                 script << "if [ -d " << entry->getRoot() << " ]; then" << endl;
                 if (update) {
@@ -139,7 +142,7 @@ void scriptGenerator::build(unique_ptr<firmwareRelease>& release, const string& 
 
     for (auto& entry : release->getRecipes()) {
         if (singleTarget.empty() || (entry->getName().compare(singleTarget) == 0)) {
-            script << "echo build " << entry->getName() << std::endl;
+            script << "echo Build " << entry->getName() << std::endl;
             script << "cd " << entry->getRoot() << " || exit 1" << std::endl;
             for (auto& t : entry->getCmdList()) {
             if (!t.empty())
