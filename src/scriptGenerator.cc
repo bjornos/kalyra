@@ -162,7 +162,6 @@ void scriptGenerator::release(unique_ptr<firmwareRelease>& release, const string
     std::ofstream log(buildLog, std::ios_base::binary | std::ios_base::out);
 
     log << "Kalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
-    log << "Compiler: " << "*FIXME Unknown compiler version*" << endl;
     log << "Manifest: " << manifest << ": *FIXME unknown hash*" << endl;
 
     for (auto& entry : release->getRecipes()) {
