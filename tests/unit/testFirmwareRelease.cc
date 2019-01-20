@@ -5,8 +5,6 @@
 #include "packageRecipe.hh"
 #include "firmwareRelease.hh"
 
-//using namespace std;
-
 constexpr auto RELEASE_NAME = "testrelease";
 constexpr auto RELEASE_NUMBER = "1.0";
 constexpr auto RELEASE_STAGE = "test";

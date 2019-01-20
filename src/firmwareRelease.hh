@@ -18,7 +18,7 @@ public:
     std::string& getStage();
     std::string& getBuild();
     std::string& getEnv();
-    bool hasRecipe(std::string& recipe);
+    bool hasRecipe(const std::string& recipe);
 
     std::vector<std::unique_ptr<packageRecipe>>& getRecipes();
     std::unique_ptr<releaseComponent>& getReleaseComponents();

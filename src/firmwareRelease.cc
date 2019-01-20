@@ -50,7 +50,7 @@ string firmwareRelease::getReleasePath()
          stage + PLT_SLASH + getReleasePrefix();
 }
 
-bool firmwareRelease::hasRecipe(string& recipe)
+bool firmwareRelease::hasRecipe(const string& recipe)
 {
     for (auto& r : recipes) {
         if (r->getName().compare(recipe) == 0) {
