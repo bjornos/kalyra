@@ -111,8 +111,23 @@ int main(int argc, char *argv[])
     	return EXIT_SUCCESS;
     }
 
+    if (cmdOptions.cmdOptionExists("--yes"))
+        optYes = true;
+
     if (cmdOptions.cmdOptionExists("-c") || cmdOptions.cmdOptionExists("--clean")) {
         cout << "Clean up workspace..." << endl;
+
+        if (!optYes) {
+            char answer;
+            cout << "This will erase everything laying around in the " BUILDDIR " directory." << endl;
+            cout << "OK to proceed (y/n)? ";
+            cin >> answer;
+            if ((answer != 'y') && (answer != 'Y')) {
+                cout << "Nothing removed." << endl;
+                return EXIT_SUCCESS;
+            }
+        }
+
         // yes, very bad practise. Shall be removed when making the move to c++17
         return std::system("rm -rf " BUILDDIR " .kalyra-manifest");
     }
@@ -161,9 +176,6 @@ int main(int argc, char *argv[])
 
     if (cmdOptions.cmdOptionExists("--fwrt"))
         optFwrt = true;
-
-    if (cmdOptions.cmdOptionExists("--yes"))
-        optYes = true;
 
     if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists(OPT_BUILD_LONG)) {
         optBuildOnly = true;
