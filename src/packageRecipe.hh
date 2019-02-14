@@ -4,13 +4,16 @@
 #include <memory>
 #include <vector>
 
+constexpr auto RECIPE_DIRECTORY = "recipes/";
+constexpr auto RECIPE_SUFFIX = ".rp";
+
 class packageRecipe {
 public:
     packageRecipe(std::string name, std::string revisionOverride, std::string targetOverride);
     packageRecipe(std::string name, std::string url);
     ~packageRecipe();
 
-    static void parseRecipe(std::unique_ptr<packageRecipe>& recipe);
+    static void parseRecipe(std::istream &file, std::unique_ptr<packageRecipe>& recipe);
 
     std::string& getName();
     std::string& getRev();

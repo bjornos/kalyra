@@ -231,7 +231,8 @@ int main(int argc, char *argv[])
 
     for (auto& entry : recipes) {
         try {
-            packageRecipe::parseRecipe(entry);
+            ifstream r(RECIPE_DIRECTORY + entry->getName() + RECIPE_SUFFIX);
+            packageRecipe::parseRecipe(r, entry);
         } catch (const exception& e) {
             cerr << termcolor::red << e.what() << termcolor::reset << endl << "Abort!" << endl;
             return EXIT_FAILURE;

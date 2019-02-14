@@ -7,9 +7,6 @@
 
 using namespace std;
 
-constexpr auto RECIPE_DIRECTORY = "recipes/";
-constexpr auto RECIPE_SUFFIX = ".rp";
-
 packageRecipe::packageRecipe(string name, string revisionOverride, string targetOverride) :
     name(name),
     revisionOverride(revisionOverride),
@@ -27,13 +24,12 @@ packageRecipe::~packageRecipe()
 {
 }
 
-void packageRecipe::parseRecipe(unique_ptr<packageRecipe>& recipe)
+void packageRecipe::parseRecipe(istream &file, unique_ptr<packageRecipe>& recipe)
 {
-    std::ifstream r(RECIPE_DIRECTORY + recipe->name + RECIPE_SUFFIX);
     std::stringstream buffer;
 
-    if (r.is_open())
-        buffer << r.rdbuf();
+    if (file.good())
+        buffer << file.rdbuf();
     else {
         const string error("cannot find recipe for " + recipe->name);
         throw std:: invalid_argument(error);
@@ -90,15 +86,15 @@ void packageRecipe::parseRecipe(unique_ptr<packageRecipe>& recipe)
         recipe->license = license->valuestring;
     }
 
-    string realTarget;
     if (recipe->targetOverride.empty()) {
         auto target = cJSON_GetObjectItemCaseSensitive(packageProp, "target");
-        realTarget = target->valuestring;
+        recipe->target = target->valuestring;
     }
-    else 
-    	realTarget = recipe->targetOverride;
+    else {
+        recipe->target = recipe->targetOverride;
+    }
 
-    auto cmdList = cJSON_GetObjectItemCaseSensitive(buildPackage, realTarget.c_str());
+    auto cmdList = cJSON_GetObjectItemCaseSensitive(buildPackage, recipe->target.c_str());
     if (cmdList == NULL) {
         auto errMsg(recipe->name + ": No target found.");
         throw std::invalid_argument(errMsg);
