@@ -5,11 +5,11 @@ IF (WIN32)
 	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
 ENDIF()
 
-add_library(manifest manifest.cc manifest.hh)
-add_library(firmwareRelease firmwareRelease.cc firmwareRelease.hh)
-add_library(packageRecipe packageRecipe.cc packageRecipe.hh)
-add_library(scriptGenerator scriptGenerator.cc scriptGenerator.hh)
-add_library(releaseComponent releaseComponent.cc releaseComponent.hh)
+add_library(manifest manifest.cc)
+add_library(firmwareRelease firmwareRelease.cc)
+add_library(packageRecipe packageRecipe.cc)
+add_library(scriptGenerator scriptGenerator.cc)
+add_library(releaseComponent releaseComponent.cc)
 add_library(cJSON ../${JSON_PATH}/cJSON.c)
 
 # Firmware Factory

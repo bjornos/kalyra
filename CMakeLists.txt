@@ -7,7 +7,7 @@ set(JSON_PATH lib/cJSON)
 set(SOURCE_DIR src)
 
 include_directories(lib)
-include_directories(src)
+include_directories(include)
 
 link_directories(lib/cJSON)
 
