@@ -22,6 +22,7 @@ target_link_libraries (ff
 	scriptGenerator
 	releaseComponent
 	cJSON
+	stdc++fs
 )
 
 # Recipe Generator

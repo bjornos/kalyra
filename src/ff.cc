@@ -2,6 +2,8 @@
 #include <fstream>
 #include <cstdlib>
 #include <algorithm>
+#include <filesystem>
+
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -43,25 +45,6 @@ constexpr auto TAG_BUILD = "build";
 constexpr auto TAG_PATH = "release-path";
 constexpr auto TAG_ENVIRONMENT = "environment";
 constexpr auto TAG_PACKAGES = "packages";
-
-int createDir(const string& dir)
-{
-//FIXME: look into c++17 for cross platform solution
-#if defined(_WIN32) || defined(_WIN64)
-    if (!CreateDirectory(dir.c_str(), NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
-        return -1;
-    } else {
-        return 0;
-    }
-#else
-    struct stat st;
-    if (stat(dir.c_str(), &st)) {
-        return mkdir(dir.c_str(), 0755);
-    } else {
-        return 1;
-    }
-#endif
-}
 
 bool runScript(const char* cmd)
 {
@@ -128,8 +111,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        // yes, very bad practise. Shall be removed when making the move to c++17
-        return std::system("rm -rf " BUILDDIR " .kalyra-manifest");
+        return (std::filesystem::remove_all(BUILDDIR) || std::filesystem::remove(".kalyra-manifest"));
     }
 
     auto fileName(cmdOptions.getCmdOption("-m"));
@@ -281,7 +263,7 @@ int main(int argc, char *argv[])
     if (optGenerateOnly)
         cout << "Generating build scripts...." << endl;
 
-    if (createDir(BUILDDIR) == -1) {
+    if (!std::filesystem::exists(BUILDDIR) && !std::filesystem::create_directory(BUILDDIR)) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
@@ -336,8 +318,7 @@ int main(int argc, char *argv[])
 
         if (!runScript(SCRIPT_CMD_GITTAG)) {
             cerr << termcolor::red << "Failed to set git tag! Release abort." << termcolor::reset << endl;
-            auto rmRelDir("rm -rf " + fwrt->getReleasePath());
-            std::system(rmRelDir.c_str());
+            std::filesystem::remove_all(fwrt->getReleasePath());
             return EXIT_FAILURE;
         }
     }

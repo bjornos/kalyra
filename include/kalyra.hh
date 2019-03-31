@@ -1,8 +1,8 @@
 #pragma once
 
 #define KALYRA_MAJOR "1"
-#define KALYRA_MINOR "0"
-#define KALYRA_SUB  "7"
+#define KALYRA_MINOR "1"
+#define KALYRA_SUB  "0"
 #define KALYRA_BANNER "Kalyra Build System"
 
 #if defined(_WIN32) || defined(_WIN64)
