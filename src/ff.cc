@@ -2,12 +2,12 @@
 #include <fstream>
 #include <cstdlib>
 #include <algorithm>
-#include <filesystem>
 
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #else
+#include <filesystem>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
@@ -111,7 +111,11 @@ int main(int argc, char *argv[])
             }
         }
 
+#if defined(_WIN32) || defined(_WIN64)
+        return std::system("rm -rf " BUILDDIR " .kalyra-manifest");
+#else
         return (std::filesystem::remove_all(BUILDDIR) || std::filesystem::remove(".kalyra-manifest"));
+#endif
     }
 
     auto fileName(cmdOptions.getCmdOption("-m"));
@@ -263,10 +267,17 @@ int main(int argc, char *argv[])
     if (optGenerateOnly)
         cout << "Generating build scripts...." << endl;
 
+
+#if defined(_WIN32) || defined(_WIN64)
+    if (!CreateDirectory(BUILDDIR, NULL) && (GetLastError() != ERROR_ALREADY_EXISTS)) {
+        return EXIT_FAILURE;
+    }
+#else
     if (!std::filesystem::exists(BUILDDIR) && !std::filesystem::create_directory(BUILDDIR)) {
         cerr << termcolor::red << "Failed to create build directory." << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
+#endif
 
     scriptGenerator::fetch(fwrt, singleTargetFetch, optUpdate, singleTargetUpdate);
 
@@ -318,7 +329,12 @@ int main(int argc, char *argv[])
 
         if (!runScript(SCRIPT_CMD_GITTAG)) {
             cerr << termcolor::red << "Failed to set git tag! Release abort." << termcolor::reset << endl;
+#if defined(_WIN32) || defined(_WIN64)
+            auto rmRelDir("rm -rf " + fwrt->getReleasePath());
+            std::system(rmRelDir.c_str());
+#else
             std::filesystem::remove_all(fwrt->getReleasePath());
+#endif
             return EXIT_FAILURE;
         }
     }
