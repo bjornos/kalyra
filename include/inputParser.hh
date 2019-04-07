@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 #include <cstdlib>
+#include <string>
+#include <tuple>
 
 #define OPT_BUILD_LONG   "--build"
 
@@ -10,29 +12,45 @@
 #define OPT_UPDATE_LONG  "--update"
 #define OPT_UPDATE_DESC   "Update sources with latest changes on remote repository for appointed branch. If no recipe is stated, all repositories are updated."
 
-// this class was found on stackoverflow
-// https://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
-class InputParser{
+class InputParser 
+{
     public:
-        InputParser (int &argc, char **argv){
-            for (int i=1; i < argc; ++i)
-                this->tokens.push_back(std::string(argv[i]));
-        }
-        /// @author iain
-        const std::string& getCmdOption(const std::string &option) const {
-            std::vector<std::string>::const_iterator itr;
-            itr =  std::find(this->tokens.begin(), this->tokens.end(), option);
-            if (itr != this->tokens.end() && ++itr != this->tokens.end()){
-                return *itr;
-            }
-            static const std::string empty_string("");
-            return empty_string;
-        }
-        /// @author iain
-        bool cmdOptionExists(const std::string &option) const{
-            return std::find(this->tokens.begin(), this->tokens.end(), option)
-                   != this->tokens.end();
-        }
+        InputParser(int &argc, char **argv);
+        ~InputParser();
+
+        const std::string& getCmdOption(const std::string &option) const;
+        bool cmdOptionExists(const std::string &option) const;
+
+        const std::string& getManifest();
+        bool showHelp();
+        bool alwaysYes();
+        bool clean();
+        bool fetchOnly();
+        bool buildOnly();
+        bool showRecipes();
+        bool generateOnly();
+        bool updateOnly();
+        bool FWRT();
+
+        const std::string& getFetchSingle();
+        const std::string& getBuildSingle();
+        const std::string& getUpdateSingle();
+
     private:
         std::vector <std::string> tokens;
+
+        std::string fetchSingle;
+        std::string buildSingle;
+        std::string updateSingle;
+        std::string manifest;
+        
+        bool optionClean;
+        bool optionFetchOnly;
+        bool optionUpdateOnly;
+        bool optionBuildOnly;
+        bool optionGenerateOnly;
+        bool optionShowRecipes;
+        bool optionShowHelp;
+        bool optionAlwaysYes;
+        bool optionFWRT;
 };

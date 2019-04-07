@@ -52,6 +52,9 @@ string firmwareRelease::getReleasePath()
 
 bool firmwareRelease::hasRecipe(const string& recipe)
 {
+    if (recipe.empty())
+        return false;
+
     for (auto& r : recipes) {
         if (r->getName().compare(recipe) == 0) {
             return true;

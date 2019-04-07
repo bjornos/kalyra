@@ -10,6 +10,7 @@ add_library(firmwareRelease firmwareRelease.cc)
 add_library(packageRecipe packageRecipe.cc)
 add_library(scriptGenerator scriptGenerator.cc)
 add_library(releaseComponent releaseComponent.cc)
+add_library(inputParser inputParser.cc)
 add_library(cJSON ../${JSON_PATH}/cJSON.c)
 
 # Firmware Factory
@@ -22,6 +23,7 @@ target_link_libraries (ff
 	packageRecipe
 	scriptGenerator
 	releaseComponent
+	inputParser
 	cJSON
 	stdc++fs
 )
@@ -39,4 +41,4 @@ endif()
 # Recipe Generator
 add_executable(rpgen rpgen.cc)
 
-target_link_libraries(rpgen packageRecipe cJSON)
+target_link_libraries(rpgen packageRecipe inputParser cJSON)

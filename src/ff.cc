@@ -30,14 +30,6 @@ using namespace std;
 #define cerr cout
 #endif
 
-// for unit tests
-const char* manifestFile = 
-"{"
-	"\"product\": \"projectX\","
-	"\"release\": \"1.0.0\","
-	"\"stage\": \"alpha\""
-"}";
-
 constexpr auto TAG_PRODUCT = "product";
 constexpr auto TAG_RELEASE = "release";
 constexpr auto TAG_STAGE = "stage";
@@ -62,25 +54,13 @@ bool runScript(const char* cmd)
 int main(int argc, char *argv[])
 {
     const cJSON* manifest;
-    InputParser cmdOptions(argc, argv);
-    string singleTarget;
-    string singleTargetFetch;
-    string singleTargetUpdate;
-    string releasePrefix;
-    auto optFetchOnly = false;
-    auto optGenerateOnly = false;
-    auto optBuildOnly = false;
-    auto optUpdate = false;
-    auto optFwrt = false;
-    auto optClean = false;
-    auto optYes = false;
-    auto optShowRecipes = false;
+    unique_ptr<InputParser> options(new InputParser(argc, argv));
 
     cout <<  termcolor::cyan << KALYRA_BANNER << " v" << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
 
-    cout <<  "Firmware Factory: ";
+    cout << "Firmware Factory: ";
 
-    if (cmdOptions.cmdOptionExists("--help")){
+    if (options->showHelp()){
     	cout << "Available command options:" << endl;
         cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
         cout << "-f, --fetch <recipe>    : Fetch recipe repository only. No argument means all recipes." << endl;
@@ -94,13 +74,10 @@ int main(int argc, char *argv[])
     	return EXIT_SUCCESS;
     }
 
-    if (cmdOptions.cmdOptionExists("--yes"))
-        optYes = true;
-
-    if (cmdOptions.cmdOptionExists("-c") || cmdOptions.cmdOptionExists("--clean")) {
+    if (options->clean()) {
         cout << "Clean up workspace..." << endl;
 
-        if (!optYes) {
+        if (!options->alwaysYes()) {
             char answer;
             cout << "This will erase everything laying around in the " BUILDDIR " directory." << endl;
             cout << "OK to proceed (y/n)? ";
@@ -118,81 +95,15 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    auto fileName(cmdOptions.getCmdOption("-m"));
-    if (fileName.empty()) {
-        fileName.assign (cmdOptions.getCmdOption("--manifest"));
-    }
-    if (fileName.empty()) {
-        // No manifest provided. Try with previously selected manifest, if any.
-        ifstream mFile(".kalyra-manifest");
-        if (mFile.is_open()) {
-            getline(mFile, fileName);
-            mFile.close();
-        } else {
-            cerr <<  "Missing manifest file. Try --help" <<  endl;
-            return EXIT_FAILURE;
-        }
-    } else {
-        // Save manifest as default for this build tree
-        ofstream mFile (".kalyra-manifest");
-        if (mFile.is_open()) {
-            mFile << fileName;
-            mFile.close();
-        }
+    if (options->getManifest().empty()) {
+        cerr <<  "Missing manifest file. Try --help" <<  endl;
+        return EXIT_FAILURE;
     }
 
-    if (cmdOptions.cmdOptionExists("-f") || cmdOptions.cmdOptionExists("--fetch")) {
-        optFetchOnly = true;
-        singleTargetFetch.assign(cmdOptions.getCmdOption("-f"));
-        if (singleTargetFetch.empty()) {
-            singleTargetFetch.assign(cmdOptions.getCmdOption("--fetch"));
-        }
-
-        // Handle the case where next command line option could be treated as recipe argument
-        if (!singleTargetFetch.empty() && singleTargetFetch[0] == '-')
-            singleTargetFetch.assign("");
-    }
-
-    if (cmdOptions.cmdOptionExists("-r") || cmdOptions.cmdOptionExists("--recipes")) {
-        optShowRecipes = true;
-    }
-
-    if (cmdOptions.cmdOptionExists("-g"))
-        optGenerateOnly = true;
-
-    if (cmdOptions.cmdOptionExists("--fwrt"))
-        optFwrt = true;
-
-    if (cmdOptions.cmdOptionExists("-b") || cmdOptions.cmdOptionExists(OPT_BUILD_LONG)) {
-        optBuildOnly = true;
-        singleTarget.assign(cmdOptions.getCmdOption("-b"));
-        if (singleTarget.empty()) {
-            singleTarget.assign(cmdOptions.getCmdOption(OPT_BUILD_LONG));
-        }
-
-        if (!singleTarget.empty() && singleTarget[0] == '-')
-            singleTarget.assign("");
-    }
-
-    if (cmdOptions.cmdOptionExists(OPT_UPDATE_SHORT) || cmdOptions.cmdOptionExists(OPT_UPDATE_LONG)) {
-        optUpdate = true;
-        // Doing an update does not trigger any builds unless implicitly specified
-        if (!optBuildOnly)
-            optFetchOnly = true;
-        singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_SHORT));
-        if (singleTargetUpdate.empty()) {
-            singleTargetUpdate.assign(cmdOptions.getCmdOption(OPT_UPDATE_LONG));
-        }
-
-        if (!singleTargetUpdate.empty() && singleTargetUpdate[0] == '-')
-            singleTargetUpdate.assign("");
-
-    }
-
-    cout << "Processing " << fileName << "... " << endl << endl;
+    cout << "Processing " << options->getManifest() << "... " << endl << endl;
 
     try {
-        manifest::loadHeader(manifest, fileName);
+        manifest::loadHeader(manifest, options->getManifest());
     } catch (const exception& e) {
         cerr << termcolor::red <<e.what() << termcolor::reset << endl <<  "Abort!" << endl;
         // No valid manifest is set
@@ -223,10 +134,9 @@ int main(int argc, char *argv[])
             cerr << termcolor::red << e.what() << termcolor::reset << endl << "Abort!" << endl;
             return EXIT_FAILURE;
         }
-
     }
 
-    if (optShowRecipes) {
+    if (options->showRecipes()) {
         cout << termcolor::yellow << "Available recipes:" << termcolor::reset << endl;
         for (auto& entry : recipes)
             cout << entry->getName() << endl;
@@ -240,20 +150,20 @@ int main(int argc, char *argv[])
         env->valuestring, move(recipes), move(components))));
 
 
-    if ((optBuildOnly) && (singleTarget.empty() == false) && (fwrt->hasRecipe(singleTarget) == false)) {
-        cerr << termcolor::red << "Could not find any recipe for '" << singleTarget << "'" << termcolor::reset << endl;
+    if (options->buildOnly() && (fwrt->hasRecipe(options->getBuildSingle()) == false)) {
+        cerr << termcolor::red << "Could not find any recipe for '" << options->getBuildSingle() << "'" << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
 
-    if (optFwrt) {
+   if (options->FWRT()) {
         cout << "Release: " << termcolor::yellow << fwrt->getName() << " " << fwrt->getRelease() \
             << " " << fwrt->getStage() <<  fwrt->getBuild() << termcolor::reset << endl;
 
         cout << "Release Path: " << termcolor::yellow << fwrt->getReleasePath() << \
             termcolor::reset << endl << endl;
 
-        if (!optYes) {
-            cout << "Are you sure about this? (Y/N): ";
+        if (!options->alwaysYes()) {
+            cout << "Proceed? (Y/N): ";
             char answer;
             cin >> answer;
             cout << "answer: " << answer << endl;
@@ -262,9 +172,10 @@ int main(int argc, char *argv[])
                 return EXIT_SUCCESS;
             }
         }
+        scriptGenerator::release(fwrt, options->getManifest());
     }
 
-    if (optGenerateOnly)
+    if (options->generateOnly())
         cout << "Generating build scripts...." << endl;
 
 
@@ -279,32 +190,29 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    scriptGenerator::fetch(fwrt, singleTargetFetch, optUpdate, singleTargetUpdate);
+    scriptGenerator::fetch(fwrt, options->getFetchSingle(), options->updateOnly(), options->getUpdateSingle());
 
-    scriptGenerator::build(fwrt, singleTarget);
+    scriptGenerator::build(fwrt, options->getBuildSingle());
 
-    if (optFwrt)
-        scriptGenerator::release(fwrt, fileName);
-
-    if (optGenerateOnly)
+    if (options->generateOnly())
         return EXIT_SUCCESS;
 
-    if ((!optBuildOnly || optUpdate) || optFetchOnly) {
+    if (options->buildOnly() == false) {
         if (!runScript(SCRIPT_CMD_FETCH)) {
             cerr << termcolor::red << "Error fetching target" << termcolor::reset << endl;
             return EXIT_FAILURE;
         }
-    }
 
-    if (optFetchOnly)
-        return EXIT_SUCCESS;
+        if (options->fetchOnly())
+            return EXIT_SUCCESS;
+    }
 
     if (!runScript(SCRIPT_CMD_BUILD)) {
         cerr << termcolor::red << "Abort!" << termcolor::reset << endl;
         return EXIT_FAILURE;
     }
 
-    if (optFwrt) {
+    if (options->FWRT()) {
         cout << "Copying release to server..." << endl;
 
         if (!runScript(SCRIPT_CMD_RELEASE)) {
@@ -314,7 +222,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        if (!optYes) {
+        if (!options->alwaysYes()) {
             cout << "Files have been copied. Proceed and set git release tag? (Y/N): ";
             char answer;
             cin >> answer;
