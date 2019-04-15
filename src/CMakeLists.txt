@@ -34,6 +34,7 @@ target_link_libraries (ff
 	packageRecipe
 	scriptGenerator
 	releaseComponent
+	inputParser
 	cJSON
 )
 endif()
