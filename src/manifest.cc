@@ -1,153 +1,241 @@
 #include "manifest.hh"
-#include "kalyra.hh"
+
 
 using namespace std;
+using json = nlohmann::json;
 
-bool fileExists(const string& fileName)
+static bool JSON_exists(const string& key, const json& file)
 {
-    std::ifstream infile(fileName);
-    return infile.good();
+   auto exists = file.find(key);
+
+   return (exists != file.end());
 }
 
-const cJSON* manifest::getValue(const cJSON* recipe, string tag)
+static string JSON_read(const string& item, const json& j)
 {
-    const cJSON* entry;
+	string sr("Unset");
+ 
+    auto exists = j.find(item);
+	if (exists != j.end()) {
+        try {
+            sr = j[item].get<std::string>();
+	    } catch (const exception& e) {
+            cerr << "error: " << e.what() << endl;
+        }
+	}
+    return sr;
+}
 
-    if (cJSON_HasObjectItem(recipe, tag.c_str())) {
-        entry = cJSON_GetObjectItemCaseSensitive(recipe, tag.c_str());
+
+
+string manifest::get_header_item(const json& manifest, string item)
+{
+    return JSON_read(item, manifest);
+}
+
+vector<repository> manifest::release_get_meta(const json& manifest)
+{
+    vector<repository> local_meta;
+
+     // meta layers
+	auto layers = manifest["layers"];
+
+    if (layers.size() == 0) {
+        throw logic_error("No meta layer found");
+	}
+
+    for (auto& l: json::iterator_wrapper(layers)) {
+        repository meta(l.value()[JSON_REPO_NAME].get<std::string>(),
+		                l.value()[JSON_REPO_URL].get<std::string>(),
+                        l.value()[JSON_REPO_VERSION].get<std::string>());
+
+        local_meta.emplace_back(meta);
+   	}
+
+    return local_meta;
+}
+
+vector<string> manifest::release_get_products(const json& manifest)
+{
+    vector<string> products;
+
+	auto items = manifest["configs"];
+
+    if (items.size() == 0) {
+        throw logic_error("No product item found.");
+	}
+
+	for (auto& i: json::iterator_wrapper(items)) {
+        auto item(i.value()[JSON_CONF_NAME].get<std::string>());
+        products.emplace_back(item);
+   	}
+
+    return products;
+}
+
+
+std::vector<repository> manifest::product_get_recipes(const json& manifest)
+{
+    std::vector<repository> recipe;
+
+	auto recipes = manifest["recipes"];
+
+    if (recipes.size() == 0) {
+        throw logic_error("No recipes item found.");
+	}
+
+	for (auto& r: json::iterator_wrapper(recipes))
+	{
+        repository repo(
+			r.value()[JSON_SRC_NAME].get<std::string>(),
+		    r.value()[JSON_SRC_URL].get<std::string>(),
+			r.value()[JSON_SRC_VERSION].get<std::string>());
+
+        recipe.emplace_back(repo);
+   	}
+
+    return recipe;
+}
+
+std::vector<package> manifest::product_get_packages(const json& manifest)
+{
+    vector<package> product_packages;
+
+	auto packages = manifest["packages"];
+
+	for (auto& r: json::iterator_wrapper(packages))
+	{
+		string rp;
+		string override("");
+		string target("");
+	
+		rp.assign(r.value()[JSON_PKG_RECIPE].get<std::string>());
+
+		if (r.value()[JSON_PKG_REVISION].empty() == false)
+		{
+			override.assign(r.value()[JSON_PKG_REVISION].get<std::string>());
+		}
+
+		if (r.value()[JSON_PKG_TARGET].empty() == false)
+		{
+			target.assign(r.value()[JSON_PKG_TARGET].get<std::string>());
+		}
+
+		package pack(rp, target, override);
+
+        product_packages.emplace_back(pack);
+   	}
+
+    return product_packages;
+}
+
+
+
+std::vector<string> manifest::product_get_cmd(const json& manifest, const string& cmd_type)
+{
+    //json cmd;
+    vector<string> cmd;
+
+   if (JSON_exists("commands", manifest))
+   {
+        auto cmds = manifest["commands"];
+
+//        auto subcmd = cmds.find(cmd_type);
+//	    if (subcmd != cmds.end())
+        if (JSON_exists(cmd_type, cmds))
+        {
+            cmd = cmds[cmd_type].get<std::vector<string>>();
+        }
+    }
+
+
+    
+    return cmd;
+}
+
+/*	for (auto i : cmdPre)
+     {
+         std::cout << i << ' ';
+     } 
+*/
+
+std::vector<artifact> manifest::product_get_artifacts(const json& manifest, const std::vector<package>& packages)
+{
+    vector<artifact> a_items;
+    json artifacts;
+
+    if (JSON_exists("artifacts", manifest)) {
+        artifacts = manifest["artifacts"];
     } else {
-        entry = cJSON_CreateString("Unknown");
+        return a_items;
     }
 
-    return entry;
-}
+	for (auto& p : packages)
+	{
+        if (JSON_exists(p.recipe, artifacts))
+        {
+            auto artifact_entry = artifacts[p.recipe];
 
-void manifest::loadHeader(const cJSON*& m, const string& manifest)
-{
-    std::ifstream t(manifest);
-    std::stringstream buffer;
+            artifact a_item;
+            a_item.target = p.recipe;
 
-    if (!fileExists(manifest))
-        throw std::invalid_argument("Manifest file not found.");
-
-    buffer << t.rdbuf();
-
-    m = cJSON_Parse(buffer.str().c_str());
-
-    if (m == NULL) {
-        auto errPtr = cJSON_GetErrorPtr();
-        if (errPtr != NULL) {
-            cout << "[DBG] Error before: " << errPtr << endl;
+            for (auto& files: json::iterator_wrapper(artifact_entry))
+		    {
+			    //cout << "copy "	<< files.value()["src"].get<std::string>() << " -> ";
+		        //cout << files.value()["dest"].get<std::string>() << endl;
+                a_item.item.emplace_back(make_tuple(files.value()["src"].get<std::string>(),files.value()["dest"].get<std::string>()));
+            }
+            a_items.emplace_back(a_item);
         }
-        throw std::invalid_argument("Error parsing manifest.");
     }
+
+    return a_items;
 }
 
-vector<unique_ptr<packageRecipe>> manifest::loadRecipes(const cJSON* manifest)
-{
-    const cJSON* package;
-    vector<unique_ptr<packageRecipe>> recipes;
 
-    auto packages = cJSON_GetObjectItemCaseSensitive(manifest, "packages");
-    cJSON_ArrayForEach(package, packages)
+std::vector<std::string> manifest::parse_recipe_target(const json& recipe_file, const string& target)
+{
+   std::vector<std::string> cmd_list;
+
+    if (JSON_exists(target, recipe_file))
     {
-        string revOverride("");
-        string targetOverride("");
+        auto cmds = recipe_file[target].get<std::vector<string>>();
+        for (auto c : cmds)
+        {
+	        cmd_list.emplace_back(c);
+	    }
 
-        auto recipe = cJSON_GetObjectItemCaseSensitive(package, "name");
-        auto rev = cJSON_GetObjectItemCaseSensitive(package, "revision");
-        auto target = cJSON_GetObjectItemCaseSensitive(package, "target");
-
-        if (!cJSON_IsString(recipe) || (recipe->valuestring == NULL)) {
-            throw std::invalid_argument("Error parsing targets.");
-        }
-
-        if (cJSON_IsString(rev) && (rev->valuestring != NULL))
-            revOverride = rev->valuestring;
-
-        if (cJSON_IsString(target) && (target->valuestring != NULL))
-            targetOverride = target->valuestring;
-
-        auto p(unique_ptr<packageRecipe>(new packageRecipe(recipe->valuestring, revOverride, targetOverride)));
-
-        recipes.emplace_back(move(p));
     }
 
-    //
-    // recursive parse any imported manifest for additional recipes
-    //
-    bool importManifest = true;
-    vector<string> imports;
-
-    while (importManifest == true) {
-        auto imp = cJSON_GetObjectItemCaseSensitive(manifest, "import");
-        if (imp == NULL) {
-            // No import field
-            importManifest = false;
-            continue;
-        }
-
-        for (auto& i : imports) {
-            if (i.compare(imp->valuestring) == 0) {
-                // Imported already
-                importManifest = false;
-                continue;
-            }
-        }
-
-        if (importManifest) {
-            const cJSON* import;
-            imports.emplace_back(imp->valuestring);
-
-            manifest::loadHeader(import, imp->valuestring);
-            vector<unique_ptr<packageRecipe>> importRecipe;
-
-            importRecipe = manifest::loadRecipes(import);
-            for (auto& r : importRecipe) {
-                recipes.emplace_back(move(r));
-            }
-        }
-    }
-
-    return recipes;
+    return cmd_list;
 }
 
-unique_ptr<releaseComponent> manifest::loadComponents(std::vector<std::unique_ptr<packageRecipe>>& recipes, const cJSON* manifest)
+
+
+unique_ptr<recipe> manifest::parse_recipe(const json& recipe_file)
 {
-    const cJSON* component;
-    vector<string> preCommands;
-    vector<string> postCommands;
-    vector<string> releaseFiles;
+    auto this_recipe(unique_ptr<recipe>(new recipe()));    
 
-    auto components = cJSON_GetObjectItemCaseSensitive(manifest, "release-components");
+    auto package = recipe_file["package"]; //.get<std::vector<string>>();
 
-    auto section = cJSON_GetObjectItemCaseSensitive(components, "pre-commands");
-    if (section != NULL) {
-        cJSON_ArrayForEach(component, section)
+	this_recipe->name.assign(JSON_read("name", package));
+	this_recipe->url.assign(JSON_read("url", package));
+	this_recipe->revision.assign(JSON_read("revision", package));
+	this_recipe->root.assign(JSON_read("root", package));
+	this_recipe->license.assign(JSON_read("license", package));
+
+    if (JSON_exists("depends", package))
+    {
+	    auto dependencies = package["depends"].get<std::vector<string>>();
+        for (auto& d : dependencies)
         {
-            preCommands.emplace_back(component->valuestring);
+	        this_recipe->dependency.emplace_back(d);
         }
-    }
+	}
+	this_recipe->target.assign(JSON_read("target", package));
 
-    section = cJSON_GetObjectItemCaseSensitive(components, "post-commands");
-    if (section != NULL) {
-        cJSON_ArrayForEach(component, section)
-        {
-            postCommands.emplace_back(component->valuestring);
-        }
-    }
+    this_recipe->cmd_list = parse_recipe_target(recipe_file, this_recipe->target);
 
-    for (auto& target : recipes) {
-        const cJSON* releaseFile;
-        auto t = cJSON_GetObjectItem(components, target->getName().c_str());
-        if (t != NULL) {
-            cJSON_ArrayForEach(releaseFile, t) {
-                releaseFiles.emplace_back(target->getRoot() + PLT_SLASH + releaseFile->valuestring);
-            }
-        }
-    }
-
-    auto rc(unique_ptr<releaseComponent>(new releaseComponent(preCommands, postCommands, releaseFiles)));
-
-    return move(rc);
+    return move(this_recipe);
 }
+
