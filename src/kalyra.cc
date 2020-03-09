@@ -3,19 +3,17 @@
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
+#include <list>
+#include <vector>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #else
-#include <filesystem>
 #include <sys/stat.h>
 #include <sys/types.h>
 #endif
 
-#include <nlohmann/json.hpp>
-
-#include <list>
-#include <vector>
 
 #include "termcolor/termcolor.hpp"
 #include "input_parser.hh"
@@ -26,17 +24,15 @@
 #include "release.hh"
 #include "script_generator.hh"
 #include "prod_conf.hh"
-
 #include "recipe.hh"
 #include "manifest.hh"
 
-using namespace std;
+namespace fs = std::filesystem;
 
+using namespace std;
 using json = nlohmann::json;
 
-
-
-string readJSON(const string& item, const json& j)
+/*string readJSON(const string& item, const json& j)
 {
 	string sr("Unset");
  
@@ -49,19 +45,7 @@ string readJSON(const string& item, const json& j)
         }
 	}
     return sr;
-}
-
-#define PLT_SHELL "bash"
-
-
-#define BUILD_DIR "sources"
-#define KALYRA_SCRIPT_DIR "scripts"
-#define KALYRA_CONF_DIR "conf"
-#define KALYRA_WORK_DIR "conf"
-
-
-
-
+}*/
 
 
 bool file_exists(const string& file_name)
@@ -94,15 +78,12 @@ int main(int argc, char* argv[])
 
     if (options->clean())
 	{
-#if defined(_WIN32) || defined(_WIN64)
-        return std::system("rm -rf " BUILDDIR " .kalyra-manifest");
-#else
-        return (std::filesystem::remove_all(KALYRA_CONF_DIR) || 
-		        std::filesystem::remove_all(KALYRA_SCRIPT_DIR) ||
-                 std::filesystem::remove_all("artifacts") || 
-                std::filesystem::remove_all("sources") ||
-                std::filesystem::remove(".kalyra-manifest") );
-#endif
+        return (fs::remove_all(KALYRA_CONF_DIR) || 
+		        fs::remove_all(KALYRA_SCRIPT_DIR) ||
+                fs::remove_all("artifacts") || 
+                fs::remove_all("sources") ||
+                fs::remove(".kalyra-manifest") );
+
     }
 
 
@@ -126,14 +107,22 @@ int main(int argc, char* argv[])
 
     json_file.close();
 
-    try {
+/*    try {
         project_release->name = manifest::get_header_item(manifest, "name");
         project_release->version = manifest::get_header_item(manifest, "version");
         project_release->stage = manifest::get_header_item(manifest, "stage");
         project_release->build = manifest::get_header_item(manifest, "build");
 	} catch (exception& e) {
 		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
+	} */
+
+    try {
+        project_release->load_header(manifest);
+	} catch (exception& e) {
+		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << "Could not find '" << e.what() << "'" << endl;
+        return EXIT_FAILURE;
 	}
+    
 	
 	cout << "Release: " << project_release->name << " " << project_release->version << project_release->stage << project_release->build << endl;
 
@@ -152,7 +141,8 @@ int main(int argc, char* argv[])
 	}
 
 
-    if (!std::filesystem::exists(KALYRA_SCRIPT_DIR) && !std::filesystem::create_directory(KALYRA_SCRIPT_DIR))
+//    if (!std::filesystem::exists(KALYRA_SCRIPT_DIR) && !std::filesystem::create_directory(KALYRA_SCRIPT_DIR))
+    if (!fs::exists(KALYRA_SCRIPT_DIR) && !fs::create_directory(KALYRA_SCRIPT_DIR))
 	{
         cerr << termcolor::red << "Failed to create work directory." << termcolor::reset << endl;
         return EXIT_FAILURE;

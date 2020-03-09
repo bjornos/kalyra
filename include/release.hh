@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include <iostream>
 #include <vector>
 
@@ -11,6 +13,13 @@ class release {
 public:
     release() {};
 	~release() {};
+
+    bool load_header(const nlohmann::json& manifest);
+
+    
+    const std::string get_name() noexcept;
+
+    //bool fetch_packages();
 
     std::string name;
 	std::string stage;

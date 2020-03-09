@@ -13,7 +13,7 @@ static bool JSON_exists(const string& key, const json& file)
 
 static string JSON_read(const string& item, const json& j)
 {
-	string sr("Unset");
+	string sr;
  
     auto exists = j.find(item);
 	if (exists != j.end()) {

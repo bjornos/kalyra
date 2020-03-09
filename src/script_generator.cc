@@ -23,7 +23,7 @@ bool script_generator::run_script(const string& cmd)
 
     auto cmd_result = std::system(os_cmd.c_str());
 #if defined(_WIN32) || defined(_WIN64)
-    if (cmdResult != 0) {
+    if (cmd_result != 0) {
 #else
     if (WEXITSTATUS(cmd_result) != 0) {
 #endif

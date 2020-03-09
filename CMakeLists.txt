@@ -4,6 +4,12 @@ project(Kalyra)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if (WIN32)
+	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+endif()
+
+
+
 # Typically you don't care so much for a third party library's tests to be
 # run from your own project's code.
 set(JSON_BuildTests OFF CACHE INTERNAL "")
@@ -22,7 +28,7 @@ include_directories(lib)
 include_directories(include)
 
 
-add_executable(kalyra src/kalyra.cc src/input_parser.cc src/script_generator.cc src/prod_conf.cc src/manifest.cc)
+add_executable(kalyra src/kalyra.cc src/input_parser.cc src/release.cc src/script_generator.cc src/prod_conf.cc src/manifest.cc)
 
 #add_executable(env_setup src/env_setup.cc)
 
