@@ -388,7 +388,7 @@ int main(int argc, char* argv[])
             cout << termcolor::red << "Error." << termcolor::reset <<  endl;
 	        return EXIT_FAILURE;
         }
-#if 0
+#if 1
         DBG(cout << termcolor::yellow << "RUN " << get<1>(ps) << termcolor::reset <<  endl);
 
         // build
