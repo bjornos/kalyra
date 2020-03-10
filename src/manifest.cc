@@ -153,6 +153,19 @@ std::vector<string> manifest::product_get_cmd(const json& manifest, const string
     return cmd;
 }
 
+
+std::vector<string> manifest::product_get_dirs(const json& manifest)
+{
+    vector<string> dirs;
+
+   if (JSON_exists("directories", manifest))
+   {
+        dirs = manifest["directories"].get<std::vector<string>>();
+    }
+
+    return dirs;
+}
+
 /*	for (auto i : cmdPre)
      {
          std::cout << i << ' ';

@@ -48,4 +48,7 @@ public:
     static std::unique_ptr<recipe> parse_recipe(const nlohmann::json& recipe_file);
     static std::vector<std::string> parse_recipe_target(const nlohmann::json& recipe_file, const std::string& target);
 
+    static std::vector<std::string> product_get_dirs(const nlohmann::json& manifest);
+
+
 };

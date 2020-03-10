@@ -57,7 +57,7 @@ bool file_exists(const string& file_name)
 int error_out(const string what)
 {
     cerr << termcolor::red << "Error: " << what << termcolor::reset  << endl;
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
 }
 
 
@@ -111,29 +111,29 @@ int main(int argc, char* argv[])
 
     auto project_release(unique_ptr<release>(new release(manifest)));
  
-    if (project_release->get_name().empty())
-    {
-        error_out("Missing product identification.");
+    try {
+        project_release->init();
+    } catch (exception& e) {
+        error_out(e.what());
     }
-    
 	
 	cout << "Configuration Release: " << project_release->get_name() << " " << project_release->version << project_release->stage << project_release->build << endl;
+
 	cout << "Setting up layer(s)..." << endl;
 
-return 0;
-
+/*
     try {
         project_release->meta = manifest::release_get_meta(manifest);
 	} catch (exception& e) {
 		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
 	}
+*/
 
-    cout << termcolor::green << "Registered " << project_release->meta.size() << " layers:" << termcolor::reset << endl;
+    cout << termcolor::green << "Registered " << project_release->meta.size() << " layer(s):" << termcolor::reset << endl;
 
     for (auto& l : project_release->meta) {
         cout << "[" << l.get_name() << "]" << endl;
 	}
-
 
 //    if (!std::filesystem::exists(KALYRA_SCRIPT_DIR) && !std::filesystem::create_directory(KALYRA_SCRIPT_DIR))
     if (!fs::exists(KALYRA_SCRIPT_DIR) && !fs::create_directory(KALYRA_SCRIPT_DIR))
@@ -151,13 +151,13 @@ return 0;
 	    return EXIT_FAILURE;
 	}
 
-
+/*
     try {
 		project_release->products = manifest::release_get_products(manifest);
 	} catch (exception& e) {
 		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
 	}
-
+*/
     cout << termcolor::green << "Registered " << project_release->products.size() << " product items:" << termcolor::reset << endl;
 
     for (auto& p : project_release->products)
@@ -165,10 +165,11 @@ return 0;
         cout << "[" << p << "]" << endl;
 	}
 
+
 //
 // Create sub products
 //  
-
+/*
     // product::getRecipeSrc
     for (auto& p : project_release->products)
 	{
@@ -252,7 +253,13 @@ return 0;
             return EXIT_FAILURE;
 		}
 	}
+*/
 
+    try {
+        sw_release = project_release->get_products();
+	} catch (exception& e) {
+		error_out(e.what());
+	}
 
     cout << "This release will include the following products:" << endl;
 
@@ -261,7 +268,6 @@ return 0;
 		cout << swrel->name << endl;
 	}
    
-
     cout << "Setting up recipe(s)..." << endl;
 
     for (auto& swrel : sw_release)
@@ -300,7 +306,7 @@ return 0;
 
             for (auto& r : swrel->recipes)
 			{
-			    recipe_current.assign(KALYRA_CONF_DIR "/" + r.get_name() + "/" + p.recipe + "_recipe.json");
+			    recipe_current.assign(KALYRA_CONF_DIR  PLT_SLASH + r.get_name() + PLT_SLASH + p.recipe + "_recipe.json");
 
                 if (file_exists(recipe_current)) {
 					recipe_found = true;
@@ -350,11 +356,16 @@ return 0;
 			
 		 }
     
- 
+// FIXME: move to scriptgenerator
+#if defined(_WIN32) || defined(_WIN64)
+        const string script_fetch_product(KALYRA_SCRIPT_DIR "\\fetch_" + swrel->name + ".bat");
+        const string script_build_product(KALYRA_SCRIPT_DIR "\\build_" + swrel->name + ".bat");
+        const string script_release_product(KALYRA_SCRIPT_DIR "\\install_" + swrel->name + ".bat");
+#else 
         const string script_fetch_product(KALYRA_SCRIPT_DIR "/fetch_" + swrel->name + ".sh");
         const string script_build_product(KALYRA_SCRIPT_DIR "/build_" + swrel->name + ".sh");
-        const string script_release_product(KALYRA_SCRIPT_DIR "/release_" + swrel->name + ".sh");
-
+        const string script_release_product(KALYRA_SCRIPT_DIR "/install_" + swrel->name + ".sh");
+#endif
         script_generator::fetch(product_fetch, script_fetch_product, "sources");
 		script_generator::build(product_recipes, script_build_product, "sources");
 		script_generator::release(swrel, script_release_product, "sources");

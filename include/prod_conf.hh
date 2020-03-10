@@ -32,6 +32,7 @@ public:
     //std::vector<std::tuple<std::string, std::string>> artifacts;
     std::vector<artifact> artifacts;
     std::vector<std::string> cmd_post;
+    std::vector<std::string> directories;
 
 
 };
