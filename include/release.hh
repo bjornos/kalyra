@@ -11,7 +11,7 @@
 
 class release {
 public:
-    release() {};
+    release(const nlohmann::json& manifest);
 	~release() {};
 
     bool load_header(const nlohmann::json& manifest);

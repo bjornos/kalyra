@@ -34,3 +34,11 @@ bool release::load_header(const json& manifest)
 
     return retval;
 }
+
+release::release(const nlohmann::json& manifest)
+{
+    this->name = manifest::get_header_item(manifest, "name");
+    this->version = manifest::get_header_item(manifest, "version");
+    this->stage = manifest::get_header_item(manifest, "stage");
+    this->build = manifest::get_header_item(manifest, "build");
+}

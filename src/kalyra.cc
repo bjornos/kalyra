@@ -54,8 +54,11 @@ bool file_exists(const string& file_name)
     return infile.good();
 }
 
-
-
+int error_out(const string what)
+{
+    cerr << termcolor::red << "Error: " << what << termcolor::reset  << endl;
+    return EXIT_FAILURE;
+}
 
 
 int main(int argc, char* argv[])
@@ -65,7 +68,6 @@ int main(int argc, char* argv[])
     string manifest_product;
     std::ifstream json_file;
 
-    auto project_release(unique_ptr<release>(new release()));
     vector<unique_ptr<product>> sw_release;
 
 
@@ -107,26 +109,18 @@ int main(int argc, char* argv[])
 
     json_file.close();
 
-/*    try {
-        project_release->name = manifest::get_header_item(manifest, "name");
-        project_release->version = manifest::get_header_item(manifest, "version");
-        project_release->stage = manifest::get_header_item(manifest, "stage");
-        project_release->build = manifest::get_header_item(manifest, "build");
-	} catch (exception& e) {
-		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
-	} */
-
-    try {
-        project_release->load_header(manifest);
-	} catch (exception& e) {
-		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << "Could not find '" << e.what() << "'" << endl;
-        return EXIT_FAILURE;
-	}
+    auto project_release(unique_ptr<release>(new release(manifest)));
+ 
+    if (project_release->get_name().empty())
+    {
+        error_out("Missing product identification.");
+    }
     
 	
-	cout << "Release: " << project_release->name << " " << project_release->version << project_release->stage << project_release->build << endl;
-
+	cout << "Configuration Release: " << project_release->get_name() << " " << project_release->version << project_release->stage << project_release->build << endl;
 	cout << "Setting up layer(s)..." << endl;
+
+return 0;
 
     try {
         project_release->meta = manifest::release_get_meta(manifest);
