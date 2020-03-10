@@ -22,7 +22,8 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 # unintended consequences that will break the build.  It's generally
 # discouraged (although not necessarily well documented as such) to use
 # include(...) for pulling in other CMake projects anyways.
-add_subdirectory(lib/json)
+
+# add_subdirectory(lib/json)
 
 include_directories(lib)
 include_directories(include)
@@ -36,4 +37,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-deprecated")
 
-target_link_libraries(kalyra PRIVATE nlohmann_json::nlohmann_json)
+# target_link_libraries(kalyra PRIVATE nlohmann_json::nlohmann_json)
+# target_link_libraries(kalyra PRIVATE nlohmann_json::nlohmann_json)
