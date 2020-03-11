@@ -143,9 +143,9 @@ bool InputParser::generateOnly()
     return optionGenerateOnly;
 }
 
-bool InputParser::FWRT()
+bool InputParser::release_build()
 {
-    return optionFWRT;
+    return optionRelease;
 }
 
 bool InputParser::showHelp()
@@ -163,7 +163,7 @@ InputParser::InputParser(int& argc, char** argv)
     optionClean = cmdOptionExists("-c") || cmdOptionExists("--clean");
     optionShowRecipes = cmdOptionExists(OPT_SHORT_RECIPES) || cmdOptionExists(OPT_LONG_RECIPES);
 
-    optionFWRT = cmdOptionExists("--fwrt");
+    optionRelease = cmdOptionExists("--release");
     optionShowHelp = cmdOptionExists("-h") || cmdOptionExists("--help");
     optionAlwaysYes = cmdOptionExists("--yes");
 

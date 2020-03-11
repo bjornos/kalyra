@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "script_generator.hh"
+#include "kalyra.hh"
 
 #if defined(_WIN32) || defined(_WIN64)
 constexpr auto PLT_SHELL = "cmd.exe /C ";
@@ -61,7 +62,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
         script << "echo  ---- Fetching " << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << git_clone(repo, path) << " || exit 1 " <<  endl;
         script << ") ELSE (" << endl;
-        script << "echo # Using " << repo.get_name() << " rev=" << repo.get_rev() << endl;
+        script << "echo == Using " << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << "cd " << path << "\\" << repo.get_name() << " || exit 1" << endl;
 
 		if (!repo.get_name().empty())
@@ -90,7 +91,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
         script << "echo  ---- Fetching " << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << git_clone(repo, path) << " || exit 1 " <<  endl;
         script << "else" << endl;
-        script << "echo  \"# Using \"" << repo.get_name() << " rev=" << repo.get_rev() << endl;
+        script << "echo  == Using \"" << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << "cd " << path << "/" << repo.get_name() << " || exit 1" << endl;
 
 		if (!repo.get_name().empty())
@@ -128,7 +129,7 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
         {
 //        script << cmd << " > /dev/null 2>&1 || exit 1" << endl;
             if (cmd.empty() == false)
-                script << "@" << cmd << " || exit 1" << endl;
+                script << cmd << " >nul || exit 1" << endl;
         }
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -140,9 +141,6 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
 
     script.close();
 }
-
-
-//void script_generator::release(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path)
 
 // change to install instead of release
 void script_generator::release(const std::unique_ptr<product>& prod, const std::string& script_file, const std::string& path)

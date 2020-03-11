@@ -5,6 +5,7 @@
 
 #include "repository.hh"
 #include "package.hh"
+#include "recipe.hh"
 
 class artifact
 {
@@ -27,6 +28,7 @@ public:
     std::string version;
 	std::vector<repository> recipes;
 	std::vector<package> packages;
+    std::vector<std::unique_ptr<recipe>> package_recipes;
 
     std::vector<std::string> cmd_pre;
     //std::vector<std::tuple<std::string, std::string>> artifacts;

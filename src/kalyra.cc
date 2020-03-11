@@ -32,22 +32,6 @@ namespace fs = std::filesystem;
 using namespace std;
 using json = nlohmann::json;
 
-/*string readJSON(const string& item, const json& j)
-{
-	string sr("Unset");
- 
-    auto exists = j.find(item);
-	if (exists != j.end()) {
-        try {
-            sr = j[item].get<std::string>();
-	    } catch (const exception& e) {
-            cerr << "error: " << e.what() << endl;
-        }
-	}
-    return sr;
-}*/
-
-
 bool file_exists(const string& file_name)
 {
     std::ifstream infile(file_name);
@@ -60,14 +44,20 @@ int error_out(const string what)
     exit(EXIT_FAILURE);
 }
 
+/* if fwrt - incoprprate release notes and package log
+             release folder in artifacts 
+             git tag
+             
+             make that as another application
+             */
+
+
 
 int main(int argc, char* argv[])
 {
-    std::ifstream jsonFile;
     unique_ptr<InputParser> options(new InputParser(argc, argv));
     string manifest_product;
     std::ifstream json_file;
-
     vector<unique_ptr<product>> sw_release;
 
 
@@ -77,6 +67,14 @@ int main(int argc, char* argv[])
 	}
 
     cout <<  termcolor::cyan << KALYRA_BANNER << " v" << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << termcolor::reset << endl;
+
+    if (options->showHelp()){
+    	cout << "Available command options:" << endl;
+        cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
+        cout << "-c, --clean             : Clean working directory" << endl;
+        cout << "--release               : Release it " << endl;
+    	return EXIT_SUCCESS;
+    }
 
     if (options->clean())
 	{
@@ -117,17 +115,8 @@ int main(int argc, char* argv[])
         error_out(e.what());
     }
 	
-	cout << "Configuration Release: " << project_release->get_name() << " " << project_release->version << project_release->stage << project_release->build << endl;
-
-	cout << "Setting up layer(s)..." << endl;
-
-/*
-    try {
-        project_release->meta = manifest::release_get_meta(manifest);
-	} catch (exception& e) {
-		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
-	}
-*/
+    if (options->release_build())
+	    cout << "Release Configuration: " << project_release->get_name() << " " << project_release->version << project_release->stage << project_release->build << endl;
 
     cout << termcolor::green << "Registered " << project_release->meta.size() << " layer(s):" << termcolor::reset << endl;
 
@@ -135,7 +124,6 @@ int main(int argc, char* argv[])
         cout << "[" << l.get_name() << "]" << endl;
 	}
 
-//    if (!std::filesystem::exists(KALYRA_SCRIPT_DIR) && !std::filesystem::create_directory(KALYRA_SCRIPT_DIR))
     if (!fs::exists(KALYRA_SCRIPT_DIR) && !fs::create_directory(KALYRA_SCRIPT_DIR))
 	{
         cerr << termcolor::red << "Failed to create work directory." << termcolor::reset << endl;
@@ -144,119 +132,22 @@ int main(int argc, char* argv[])
 
     script_generator::fetch(project_release->meta, SCRIPT_FETCH_META, KALYRA_CONF_DIR);
 
-
     if (script_generator::run_script(CMD_SCRIPT_FETCH_META) == false)
 	{
         cout << termcolor::red << "Error." << termcolor::reset <<  endl;
 	    return EXIT_FAILURE;
 	}
 
-/*
-    try {
-		project_release->products = manifest::release_get_products(manifest);
-	} catch (exception& e) {
-		cerr << termcolor::red << "Error processing manifest: " << termcolor::reset << e.what() << endl;
-	}
-*/
+   //build items
     cout << termcolor::green << "Registered " << project_release->products.size() << " product items:" << termcolor::reset << endl;
 
-    for (auto& p : project_release->products)
+    for (auto& p : project_release->products) // builds
 	{
         cout << "[" << p << "]" << endl;
 	}
 
-
-//
-// Create sub products
-//  
-/*
-    // product::getRecipeSrc
-    for (auto& p : project_release->products)
-	{
-        string prodconf;
-        bool parsed;
-        auto product_entity(unique_ptr<product>(new product()));
-
-        parsed = false;
-
-        for (auto& m : project_release->meta)
-		{
-			auto meta = m.get_name();
-			prodconf.assign(KALYRA_CONF_DIR "/" + meta + "/" + p);
-
-            if (file_exists(prodconf))
-			{
-                json_file.open(prodconf, std::ifstream::in);
-
-		        if (!json_file) {
-	                cerr << termcolor::red << "Unable to open file " << prodconf << " for reading." << termcolor::reset << endl;
-                    return EXIT_FAILURE;
-		        }
-
-                json prod_item = json::parse(json_file);
-
-                json_file.close();
-
-                product_entity->name = manifest::get_header_item(prod_item, "product");
-                product_entity->version = manifest::get_header_item(prod_item, "version");
-
-	            try {
-					product_entity->recipes = manifest::product_get_recipes(prod_item);
-				} catch (exception& e) {
-					cerr << termcolor::red << e.what() << termcolor::reset << endl;
-				}
-
-                cout << termcolor::green << "registered " << product_entity->recipes.size() << " recipes:" << termcolor::reset << endl;
-
-                for (auto& r: product_entity->recipes) {
-                    DBG(cout << r.get_name() << " @" << r.get_url() << " " <<  r.get_rev() << endl);
-                }
-
-	            try {
-					product_entity->packages = manifest::product_get_packages(prod_item);
-				} catch (exception& e) {
-					cerr << termcolor::red << e.what() << termcolor::reset << endl;
-				}
-
-                cout << termcolor::green << "registered " << product_entity->packages.size() << " package items:" << termcolor::reset << endl;
-
-                for (auto& i : product_entity->packages) {
-                    DBG(cout << i.recipe << " override:" << i.override << " target:" <<  i.target << endl);
-	            }
-
-	            try {
-					product_entity->cmd_pre = manifest::product_get_cmd(prod_item, "pre");
-					product_entity->cmd_post = manifest::product_get_cmd(prod_item, "post");
-				} catch (exception& e) {
-					// pre/post commands are optional
-				}
-
-	            try {
-					product_entity->artifacts = manifest::product_get_artifacts(prod_item, product_entity->packages);
-				} catch (exception& e) {
-					// artifacts are optional
-				}
-
-                parsed = true;
-
-			}
-		}
-
-
-
-		if (parsed == true)
-		{
-            sw_release.emplace_back(move(product_entity));
-		} else
-		{
-			cerr << termcolor::red << "Failed to locate configuration " << p << termcolor::reset << endl;
-            return EXIT_FAILURE;
-		}
-	}
-*/
-
     try {
-        sw_release = project_release->get_products();
+        sw_release = project_release->get_products(); // get_builds
 	} catch (exception& e) {
 		error_out(e.what());
 	}
@@ -370,6 +261,8 @@ int main(int argc, char* argv[])
 		script_generator::build(product_recipes, script_build_product, "sources");
 		script_generator::release(swrel, script_release_product, "sources");
 
+        swrel->package_recipes = move(product_recipes);
+    
 		product_script.emplace_back(make_tuple(script_fetch_product, script_build_product, script_release_product, swrel->name));
 
 		product_fetch.clear();
@@ -407,8 +300,61 @@ int main(int argc, char* argv[])
 	        return EXIT_FAILURE;
         }
 
-
 	}
 
-    return 0;
+    //
+    //  Generate revision logs
+    //
+    for (auto& build : sw_release)
+	{
+#if defined(_WIN32) || defined(_WIN64)
+        const string log_path("artifacts\\" + build->name ;
+        std::ofstream log(log_path + "\\" + LOG_BUILD_REVISIONS, std::ios_base::binary | std::ios_base::out);
+#endif
+
+        log << "Kalyra: "  << KALYRA_MAJOR << "." << KALYRA_MINOR << "." << KALYRA_SUB << endl;
+        log << "Manifest: " << "change to argv[0]" << ": *FIXME git hash*" << endl;
+
+        for (auto& repo : build->recipes)
+        {
+            log << repo.get_name() << ": ";
+
+            if (repo.get_rev().empty())
+            {
+                log << "master" << endl;
+            }
+            else
+            {
+                log << repo.get_rev() << endl;
+            }
+        }
+
+        for (auto& package : build->package_recipes)
+        {
+            log << package->name << ": ";
+
+            if (package->revision.empty())
+            {
+                log << "master" << endl;
+            }
+            else
+            {
+                log << package->revision << endl;
+            }
+        }
+
+
+        log.close();
+
+    }
+
+
+
+/*
+packet list log
+
+*/
+
+
+    return EXIT_SUCCESS;
 }

@@ -47,7 +47,7 @@ class InputParser
         bool showRecipes();
         bool generateOnly();
         bool updateOnly();
-        bool FWRT();
+        bool release_build();
 
         const std::string& getFetchSingle();
         const std::string& getBuildSingle();
@@ -69,5 +69,5 @@ class InputParser
         bool optionShowRecipes;
         bool optionShowHelp;
         bool optionAlwaysYes;
-        bool optionFWRT;
+        bool optionRelease;
 };

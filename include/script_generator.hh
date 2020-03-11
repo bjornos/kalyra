@@ -22,6 +22,7 @@ static void build(const std::vector<std::unique_ptr<recipe>>& recipes, const std
 static void release(const std::unique_ptr<product>& prod, const std::string& script_file, const std::string& path);
 
 
+
 /*    static void fetch(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget, bool update, const std::string& updateTarget>
     static void build(std::unique_ptr<firmwareRelease>& release, const std::string& singleTarget);
     static void release(std::unique_ptr<firmwareRelease>& release, const std::string& manifest);

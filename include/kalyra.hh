@@ -15,6 +15,11 @@
 #define KALYRA_MINOR "1"
 #define KALYRA_SUB	"2"
 
+
+constexpr auto LOG_BUILD_REVISIONS = "revisions.txt";
+
+
+
 #if defined(_WIN32) || defined(_WIN64)
 
 #define PLT_SLASH "\\"
