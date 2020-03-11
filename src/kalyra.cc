@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
     for (auto& build : sw_release)
 	{
 #if defined(_WIN32) || defined(_WIN64)
-        const string log_path("artifacts\\" + build->name ;
+        const string log_path("artifacts\\" + build->name);
         std::ofstream log(log_path + "\\" + LOG_BUILD_REVISIONS, std::ios_base::binary | std::ios_base::out);
 #endif
 
