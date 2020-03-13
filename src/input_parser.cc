@@ -143,6 +143,11 @@ bool InputParser::generateOnly()
     return optionGenerateOnly;
 }
 
+bool InputParser::verbose()
+{
+    return option_verbose;
+}
+
 bool InputParser::release_build()
 {
     return optionRelease;
@@ -170,6 +175,9 @@ InputParser::InputParser(int& argc, char** argv)
     optionFetchOnly = cmdOptionExists(OPT_SHORT_FETCH) || cmdOptionExists(OPT_LONG_FETCH);
     optionUpdateOnly = cmdOptionExists(OPT_SHORT_UPDATE) || cmdOptionExists(OPT_LONG_UPDATE);
     optionGenerateOnly = cmdOptionExists("-g") || cmdOptionExists("--generate");
+
+    option_verbose = cmdOptionExists("-v") || cmdOptionExists("--verbose");
+
 
     if (optionGenerateOnly || optionFetchOnly ||optionUpdateOnly) {
         optionBuildOnly = false;

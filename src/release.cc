@@ -23,7 +23,7 @@ const std::string release::get_name() noexcept
     return this->name;
 }
 
-vector<unique_ptr<product>> release::get_products()
+vector<unique_ptr<product>> release::get_builds()
 {
     vector<unique_ptr<product>> sw_release;
     std::ifstream json_file;
@@ -61,7 +61,7 @@ vector<unique_ptr<product>> release::get_products()
 					cerr << termcolor::red << e.what() << termcolor::reset << endl;
 				}
 
-                cout << termcolor::green << "registered " << product_entity->recipes.size() << " recipes:" << termcolor::reset << endl;
+                DBG(cout << termcolor::green << "registered " << product_entity->recipes.size() << " recipes." << termcolor::reset << endl);
 
                 for (auto& r: product_entity->recipes) {
                     DBG(cout << r.get_name() << " @" << r.get_url() << " " <<  r.get_rev() << endl);
@@ -73,7 +73,7 @@ vector<unique_ptr<product>> release::get_products()
 					cerr << termcolor::red << e.what() << termcolor::reset << endl;
 				}
 
-                cout << termcolor::green << "registered " << product_entity->packages.size() << " package items:" << termcolor::reset << endl;
+                DBG(cout << termcolor::green << "registered " << product_entity->packages.size() << " build package items." << termcolor::reset << endl);
 
                 for (auto& i : product_entity->packages) {
                     DBG(cout << i.recipe << " override:" << i.override << " target:" <<  i.target << endl);

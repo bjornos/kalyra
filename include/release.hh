@@ -20,7 +20,7 @@ public:
     const std::string get_name() noexcept;
 
 
-    std::vector<std::unique_ptr<product>> get_products();
+    std::vector<std::unique_ptr<product>> get_builds();
 
 
     std::string name;

@@ -44,14 +44,6 @@ int error_out(const string what)
     exit(EXIT_FAILURE);
 }
 
-/* if fwrt - incoprprate release notes and package log
-             release folder in artifacts 
-             git tag
-             
-             make that as another application
-             */
-
-
 
 int main(int argc, char* argv[])
 {
@@ -72,7 +64,8 @@ int main(int argc, char* argv[])
     	cout << "Available command options:" << endl;
         cout << "-m, --manifest <name>   : Project manifest file (mandatory)." << endl;
         cout << "-c, --clean             : Clean working directory" << endl;
-        cout << "--release               : Release it " << endl;
+        cout << "-b  --build <recipe>    : Build a recipe  (only works with single builds)   " << endl;
+        cout << "-v  --verbose           : Show compile/build output   " << endl;
     	return EXIT_SUCCESS;
     }
 
@@ -82,6 +75,7 @@ int main(int argc, char* argv[])
 		        fs::remove_all(KALYRA_SCRIPT_DIR) ||
                 fs::remove_all("artifacts") || 
                 fs::remove_all("sources") ||
+                fs::remove_all("log") ||
                 fs::remove(".kalyra-manifest") );
 
     }
@@ -107,56 +101,48 @@ int main(int argc, char* argv[])
 
     json_file.close();
 
-    auto project_release(unique_ptr<release>(new release(manifest)));
+    auto product_release(unique_ptr<release>(new release(manifest)));
  
     try {
-        project_release->init();
+        product_release->init();
     } catch (exception& e) {
         error_out(e.what());
     }
 	
-    if (options->release_build())
-	    cout << "Release Configuration: " << project_release->get_name() << " " << project_release->version << project_release->stage << project_release->build << endl;
+    //cout << "Release Configuration: " << product_release->get_name() << " " << product_release->version << product_release->stage << product_release->build << endl;
 
-    cout << termcolor::green << "Registered " << project_release->meta.size() << " layer(s):" << termcolor::reset << endl;
+    cout << termcolor::green << "Registered " << product_release->meta.size() << " layer(s)." << termcolor::reset << endl;
 
-    for (auto& l : project_release->meta) {
-        cout << "[" << l.get_name() << "]" << endl;
-	}
-
-    if (!fs::exists(KALYRA_SCRIPT_DIR) && !fs::create_directory(KALYRA_SCRIPT_DIR))
-	{
-        cerr << termcolor::red << "Failed to create work directory." << termcolor::reset << endl;
-        return EXIT_FAILURE;
-    }
-
-    script_generator::fetch(project_release->meta, SCRIPT_FETCH_META, KALYRA_CONF_DIR);
-
-    if (script_generator::run_script(CMD_SCRIPT_FETCH_META) == false)
-	{
-        cout << termcolor::red << "Error." << termcolor::reset <<  endl;
-	    return EXIT_FAILURE;
-	}
-
-   //build items
-    cout << termcolor::green << "Registered " << project_release->products.size() << " product items:" << termcolor::reset << endl;
-
-    for (auto& p : project_release->products) // builds
-	{
-        cout << "[" << p << "]" << endl;
+    for (auto& l : product_release->meta) {
+        DBG(cout << "[" << l.get_name() << "]" << endl);
 	}
 
     try {
-        sw_release = project_release->get_products(); // get_builds
+        fs::create_directory(KALYRA_SCRIPT_DIR);
+        fs::create_directory("log");
+	} catch (exception& e) {
+		error_out(e.what());
+    }    
+
+
+    script_generator::fetch(product_release->meta, SCRIPT_FETCH_META, KALYRA_CONF_DIR);
+
+    try {
+        script_generator::run_script(CMD_SCRIPT_FETCH_META);
+    } catch (const exception& e) {
+        error_out("Fetch mate layer failed.");
+    }
+
+
+    try {
+        sw_release = product_release->get_builds();
 	} catch (exception& e) {
 		error_out(e.what());
 	}
 
-    cout << "This release will include the following products:" << endl;
-
     for (auto& swrel : sw_release)
 	{
-		cout << swrel->name << endl;
+		cout << termcolor::cyan << "Including " << swrel->name << " in build." << termcolor::reset << endl;
 	}
    
     cout << "Setting up recipe(s)..." << endl;
@@ -188,7 +174,7 @@ int main(int argc, char* argv[])
 
     for (auto& swrel : sw_release)
 	{
-		cout << termcolor::blue << "Setting up " << swrel->name << termcolor::reset << endl;
+		cout << termcolor::yellow << "Setting up " << swrel->name << termcolor::reset << endl;
 
 
          for (auto& p : swrel->packages)
@@ -220,7 +206,7 @@ int main(int argc, char* argv[])
 
                 package_recipe = manifest::parse_recipe(prod_item);
 
-                cout << "Added " << package_recipe->name << endl;
+                DBG(cout << "Added " << package_recipe->name << endl);
 
                 // Adjust for project overrides
                 if (p.override.empty() == false)
@@ -258,7 +244,7 @@ int main(int argc, char* argv[])
         const string script_release_product(KALYRA_SCRIPT_DIR "/install_" + swrel->name + ".sh");
 #endif
         script_generator::fetch(product_fetch, script_fetch_product, "sources");
-		script_generator::build(product_recipes, script_build_product, "sources");
+		script_generator::build(product_recipes, script_build_product, "sources", options->verbose());
 		script_generator::release(swrel, script_release_product, "sources");
 
         swrel->package_recipes = move(product_recipes);
@@ -272,32 +258,32 @@ int main(int argc, char* argv[])
 
     for (auto& ps : product_script)
     {
-        cout << termcolor::blue << "[Cooking " <<  std::get<3>(ps) << "]" << termcolor::reset << endl;
-
+        //
         // fetch
-        DBG(cout << termcolor::yellow << "RUN " << get<0>(ps) << termcolor::reset <<  endl);
-        if (script_generator::run_script(get<0>(ps)) == false)
-        {
-            cout << termcolor::red << "Error." << termcolor::reset <<  endl;
-	        return EXIT_FAILURE;
+        //
+        try {
+            script_generator::run_script(get<0>(ps));
+        } catch (const exception& e) {
+            error_out("Failed to fetch repository - see log for details.");
         }
 #if 1
-        DBG(cout << termcolor::yellow << "RUN " << get<1>(ps) << termcolor::reset <<  endl);
-
+        //
         // build
-        if (script_generator::run_script(get<1>(ps)) == false)
-        {
-            cout << termcolor::red << "Error." << termcolor::reset <<  endl;
-	        return EXIT_FAILURE;
+        //
+        try {
+            script_generator::run_script(get<1>(ps));
+        } catch (const exception& e) {
+            error_out("Failed to build package - see log for details.");
         }
-#endif
-        // install
-        DBG(cout << termcolor::yellow << "RUN " << get<2>(ps) << termcolor::reset <<  endl);
 
-        if (script_generator::run_script(get<2>(ps)) == false)
-        {
-            cout << termcolor::red << "Error." << termcolor::reset <<  endl;
-	        return EXIT_FAILURE;
+#endif
+        //
+        // install
+        //
+        try {
+            script_generator::run_script(get<2>(ps));
+        } catch (const exception& e) {
+            error_out("Failed to install - see log for details.");
         }
 
 	}
@@ -347,14 +333,6 @@ int main(int argc, char* argv[])
         log.close();
 
     }
-
-
-
-/*
-packet list log
-
-*/
-
 
     return EXIT_SUCCESS;
 }

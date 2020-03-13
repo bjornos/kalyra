@@ -1,6 +1,8 @@
 #pragma once
 
-#define DBG(x) x
+#include <stdexcept>
+
+#define DBG(x)
 
 //#define PLT_SHELL "bash"
 

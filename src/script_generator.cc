@@ -34,6 +34,7 @@ bool script_generator::run_script(const string& cmd)
 #else
     if (WEXITSTATUS(cmd_result) != 0) {
 #endif
+        throw logic_error("Script exited with error code.");
         return false;
     }
     return true;
@@ -53,7 +54,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
     script << "@echo off" << endl;
     script << "SET ROOTDIR=%cd%" << endl;
     script << "SETLOCAL" << endl;
- 
+
     for (auto& repo : repos)
     {
 
@@ -66,7 +67,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
         script << "cd " << path << "\\" << repo.get_name() << " || exit 1" << endl;
 
 		if (!repo.get_name().empty())
-		    script << "@git checkout -q " << repo.get_rev() << " || exit 1 " << endl;
+		    script << "git checkout -q " << repo.get_rev() << " > %ROOTDIR%\\log\\fetch_" << repo.get_name() << ".txt || exit 1 " << endl;
 
         script << "cd %ROOTDIR%" << endl;
         script << ")" << endl;
@@ -104,7 +105,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
 #endif
 }
 
-void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path)
+void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path, bool verbose)
 {
     std::ofstream script(script_file, std::ios_base::binary | std::ios_base::out);
 
@@ -127,9 +128,17 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
 
         for (auto& cmd : r->cmd_list)
         {
-//        script << cmd << " > /dev/null 2>&1 || exit 1" << endl;
             if (cmd.empty() == false)
-                script << cmd << " >nul || exit 1" << endl;
+#if defined(_WIN32) || defined(_WIN64)
+                if (verbose == true)
+                {
+                    script << cmd << " || exit 1" << endl;
+                } else {
+                    script << cmd << " > %ROOTDIR%\\log\\build_" << r->name << ".txt || exit 1" << endl;                    
+                }
+#else
+                script << cmd << " > ${rootdir}/log/build_" << r->name << ".txt || exit 1" << endl;
+#endif
         }
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -186,7 +195,7 @@ void script_generator::release(const std::unique_ptr<product>& prod, const std::
 
         for (auto& i : a.item)
         {
-            script << "cp -rfv " << get<0>(i) << " %ROOTDIR%\\" << release_path << "\\" << get<1>(i) << " || exit 1" << endl;
+            script << "cp -rfv " << get<0>(i) << " %ROOTDIR%\\" << release_path << "\\" << get<1>(i) << " > %ROOTDIR%\\log\\install_" << prod->name << ".txt || exit 1" << endl;
         }
          
          script << "cd %ROOTDIR% || exit 1" << endl;

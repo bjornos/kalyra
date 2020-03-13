@@ -18,7 +18,7 @@ public:
     static void fetch(std::vector<repository>& repos, const std::string& script_file, const std::string& path);
 
 //static void build(const std::unique_ptr<recipe>& recipe, const std::string& script_file, const std::string& path);
-static void build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path);
+static void build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path, bool verbose);
 static void release(const std::unique_ptr<product>& prod, const std::string& script_file, const std::string& path);
 
 

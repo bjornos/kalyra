@@ -48,6 +48,7 @@ class InputParser
         bool generateOnly();
         bool updateOnly();
         bool release_build();
+        bool verbose();
 
         const std::string& getFetchSingle();
         const std::string& getBuildSingle();
@@ -70,4 +71,5 @@ class InputParser
         bool optionShowHelp;
         bool optionAlwaysYes;
         bool optionRelease;
+        bool option_verbose;
 };
