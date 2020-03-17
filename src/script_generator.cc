@@ -41,7 +41,7 @@ bool script_generator::run_script(const string& cmd)
 }
 
 
-void script_generator::fetch(std::vector<repository>& repos, const std::string& script_file, const std::string& path)
+void script_generator::fetch(std::vector<repository>& repos, const std::string& script_file, const std::string& path, const unique_ptr<InputParser>& options)
 {
     std::ofstream script(script_file, std::ios_base::binary | std::ios_base::out);
 
@@ -57,6 +57,13 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
 
     for (auto& repo : repos)
     {
+        if (options != NULL &&
+            options->fetch_only() &&
+           (options->get_fetch_single().compare(repo.get_name()) != 0))
+        {
+            // only fetch the specific recipe specified
+             continue;
+        }
 
         script << "IF NOT EXIST " << path << "\\" << repo.get_name() << "\\.git (" << endl;
         script << "rm -rf " << path << "\\" << repo.get_name() << endl;
@@ -105,7 +112,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
 #endif
 }
 
-void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path, bool verbose)
+void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes, const std::string& script_file, const std::string& path, const unique_ptr<InputParser>& options)
 {
     std::ofstream script(script_file, std::ios_base::binary | std::ios_base::out);
 
@@ -118,8 +125,15 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
     script << "rootdir=${PWD}" << endl;
 #endif
 
-   for (auto& r : recipes)
-   {
+    for (auto& r : recipes)
+    {
+        if (options->build_only() &&
+           (options->get_build_single().compare(r->name) != 0))
+        {
+            // only build the specific recipe specified
+             continue;
+        }
+
         script << "echo == Building " << r->name << endl;
 
         script << "cd " << path << endl;
@@ -130,7 +144,7 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
         {
             if (cmd.empty() == false)
 #if defined(_WIN32) || defined(_WIN64)
-                if (verbose == true)
+                if (options->verbose() == true)
                 {
                     script << cmd << " || exit 1" << endl;
                 } else {

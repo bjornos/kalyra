@@ -63,14 +63,14 @@ bool InputParser::clean()
     return optionClean;
 }
 
-bool InputParser::fetchOnly()
+bool InputParser::fetch_only()
 {
-    return optionFetchOnly;
+    return option_fetch_only;
 }
 
-bool InputParser::buildOnly()
+bool InputParser::build_only()
 {
-     return optionBuildOnly;
+     return option_build_only;
 }
 
 bool InputParser::updateOnly()
@@ -78,27 +78,27 @@ bool InputParser::updateOnly()
     return optionUpdateOnly;
 }
 
-const string& InputParser::getBuildSingle()
+const string& InputParser::get_build_single()
 {
-    if (optionBuildOnly) {
-        buildSingle.assign(getCmdOption(OPT_SHORT_BUILD));
-        if (buildSingle.empty()) {
-            buildSingle.assign(getCmdOption(OPT_LONG_BUILD));
+    if (option_build_only) {
+        build_single.assign(getCmdOption(OPT_SHORT_BUILD));
+        if (build_single.empty()) {
+            build_single.assign(getCmdOption(OPT_LONG_BUILD));
         }
 
         // Handle the case where next command line option could be treated
         // as recipe argument
-        if (!buildSingle.empty() && buildSingle[0] == '-') {
-            buildSingle.assign("");
+        if (!build_single.empty() && build_single[0] == '-') {
+            build_single.assign("");
         }
     }
 
-    return buildSingle;
+    return build_single;
 }
 
-const string& InputParser::getFetchSingle()
+const string& InputParser::get_fetch_single()
 {
-    if (optionFetchOnly) {
+    if (option_fetch_only) {
         fetchSingle.assign(getCmdOption(OPT_SHORT_FETCH));
         if (fetchSingle.empty()) {
             fetchSingle.assign(getCmdOption(OPT_LONG_FETCH));
@@ -117,8 +117,8 @@ const string& InputParser::getFetchSingle()
 const string& InputParser::getUpdateSingle()
 {
     // Doing an update does not trigger any builds unless implicitly specified
-    if (optionBuildOnly)
-        optionFetchOnly = false;
+    if (option_build_only)
+        option_fetch_only = false;
 
     updateSingle.assign(getCmdOption(OPT_SHORT_UPDATE));
 
@@ -138,9 +138,9 @@ bool InputParser::showRecipes()
     return optionShowRecipes;
 }
 
-bool InputParser::generateOnly()
+bool InputParser::generate_only()
 {
-    return optionGenerateOnly;
+    return option_generate_only;
 }
 
 bool InputParser::verbose()
@@ -172,17 +172,17 @@ InputParser::InputParser(int& argc, char** argv)
     optionShowHelp = cmdOptionExists("-h") || cmdOptionExists("--help");
     optionAlwaysYes = cmdOptionExists("--yes");
 
-    optionFetchOnly = cmdOptionExists(OPT_SHORT_FETCH) || cmdOptionExists(OPT_LONG_FETCH);
+    option_fetch_only = cmdOptionExists(OPT_SHORT_FETCH) || cmdOptionExists(OPT_LONG_FETCH);
     optionUpdateOnly = cmdOptionExists(OPT_SHORT_UPDATE) || cmdOptionExists(OPT_LONG_UPDATE);
-    optionGenerateOnly = cmdOptionExists("-g") || cmdOptionExists("--generate");
+    option_generate_only = cmdOptionExists("-g") || cmdOptionExists("--generate");
 
     option_verbose = cmdOptionExists("-v") || cmdOptionExists("--verbose");
 
 
-    if (optionGenerateOnly || optionFetchOnly ||optionUpdateOnly) {
-        optionBuildOnly = false;
+    if (option_generate_only || option_fetch_only ||optionUpdateOnly) {
+        option_build_only = false;
     } else  {
-        optionBuildOnly = cmdOptionExists(OPT_SHORT_BUILD) || cmdOptionExists(OPT_LONG_BUILD);
+        option_build_only = cmdOptionExists(OPT_SHORT_BUILD) || cmdOptionExists(OPT_LONG_BUILD);
     }
 
 }

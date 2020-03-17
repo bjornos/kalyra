@@ -42,34 +42,34 @@ class InputParser
         bool showHelp();
         bool alwaysYes();
         bool clean();
-        bool fetchOnly();
-        bool buildOnly();
+        bool fetch_only();
+        bool build_only();
         bool showRecipes();
-        bool generateOnly();
+        bool generate_only();
         bool updateOnly();
         bool release_build();
         bool verbose();
 
-        const std::string& getFetchSingle();
-        const std::string& getBuildSingle();
+        const std::string& get_fetch_single();
+        const std::string& get_build_single();
         const std::string& getUpdateSingle();
 
     private:
         std::vector <std::string> tokens;
 
         std::string fetchSingle;
-        std::string buildSingle;
+        std::string build_single;
         std::string updateSingle;
         std::string manifest;
         
         bool optionClean;
-        bool optionFetchOnly;
+        bool option_fetch_only;
         bool optionUpdateOnly;
-        bool optionBuildOnly;
-        bool optionGenerateOnly;
+        bool option_build_only;
         bool optionShowRecipes;
         bool optionShowHelp;
         bool optionAlwaysYes;
         bool optionRelease;
+        bool option_generate_only;
         bool option_verbose;
 };

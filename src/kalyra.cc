@@ -47,6 +47,7 @@ int error_out(const string what)
 
 int main(int argc, char* argv[])
 {
+    const unique_ptr<InputParser> options_empty = NULL;
     unique_ptr<InputParser> options(new InputParser(argc, argv));
     string manifest_product;
     std::ifstream json_file;
@@ -124,13 +125,12 @@ int main(int argc, char* argv[])
 		error_out(e.what());
     }    
 
-
-    script_generator::fetch(product_release->meta, SCRIPT_FETCH_META, KALYRA_CONF_DIR);
+    script_generator::fetch(product_release->meta, SCRIPT_FETCH_META, KALYRA_CONF_DIR, options_empty);
 
     try {
         script_generator::run_script(CMD_SCRIPT_FETCH_META);
     } catch (const exception& e) {
-        error_out("Fetch mate layer failed.");
+        error_out("Fetch meta layer failed.");
     }
 
 
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
     for (auto& swrel : sw_release)
 	{
         // fetch for each product - needed to get correct git revision
-        script_generator::fetch(swrel->recipes, SCRIPT_FETCH_RECIPE, KALYRA_CONF_DIR);
+        script_generator::fetch(swrel->recipes, SCRIPT_FETCH_RECIPE, KALYRA_CONF_DIR, options_empty);
 
         if (script_generator::run_script(CMD_SCRIPT_FETCH_RECIPE) == false)
         {
@@ -243,8 +243,8 @@ int main(int argc, char* argv[])
         const string script_build_product(KALYRA_SCRIPT_DIR "/build_" + swrel->name + ".sh");
         const string script_release_product(KALYRA_SCRIPT_DIR "/install_" + swrel->name + ".sh");
 #endif
-        script_generator::fetch(product_fetch, script_fetch_product, "sources");
-		script_generator::build(product_recipes, script_build_product, "sources", options->verbose());
+        script_generator::fetch(product_fetch, script_fetch_product, "sources", options);
+		script_generator::build(product_recipes, script_build_product, "sources", options);
 		script_generator::release(swrel, script_release_product, "sources");
 
         swrel->package_recipes = move(product_recipes);
@@ -256,6 +256,10 @@ int main(int argc, char* argv[])
 
 	}
 
+    if (options->generate_only())
+        return EXIT_SUCCESS;
+
+
     for (auto& ps : product_script)
     {
         //
@@ -266,6 +270,10 @@ int main(int argc, char* argv[])
         } catch (const exception& e) {
             error_out("Failed to fetch repository - see log for details.");
         }
+
+        if (options->fetch_only() == true)
+            continue;//return EXIT_SUCCESS;
+
 #if 1
         //
         // build
@@ -277,6 +285,10 @@ int main(int argc, char* argv[])
         }
 
 #endif
+
+        if (options->build_only() == true)
+            continue;//return EXIT_SUCCESS;
+    
         //
         // install
         //
