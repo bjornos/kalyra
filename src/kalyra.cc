@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
 // FIXME: move to scriptgenerator
 #if defined(_WIN32) || defined(_WIN64)
         const string script_fetch_product(KALYRA_SCRIPT_DIR "\\fetch_" + swrel->name + ".bat");
-  kk      const string script_build_product(KALYRA_SCRIPT_DIR "\\build_" + swrel->name + ".bat");
+        const string script_build_product(KALYRA_SCRIPT_DIR "\\build_" + swrel->name + ".bat");
         const string script_release_product(KALYRA_SCRIPT_DIR "\\install_" + swrel->name + ".bat");
 #else 
         const string script_fetch_product(KALYRA_SCRIPT_DIR "/fetch_" + swrel->name + ".sh");
