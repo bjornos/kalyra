@@ -99,7 +99,7 @@ void script_generator::fetch(std::vector<repository>& repos, const std::string& 
         script << "echo  ---- Fetching " << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << git_clone(repo, path) << " || exit 1 " <<  endl;
         script << "else" << endl;
-        script << "echo  == Using \"" << repo.get_name() << " rev=" << repo.get_rev() << endl;
+        script << "echo  == Using " << repo.get_name() << " rev=" << repo.get_rev() << endl;
         script << "cd " << path << "/" << repo.get_name() << " || exit 1" << endl;
 
 		if (!repo.get_name().empty())
@@ -151,7 +151,12 @@ void script_generator::build(const std::vector<std::unique_ptr<recipe>>& recipes
                     script << cmd << " > %ROOTDIR%\\log\\build_" << r->name << ".txt || exit 1" << endl;                    
                 }
 #else
+                if (options->verbose() == true)
+                {
+                    script << cmd << " || exit 1" << endl;
+                } else {
                 script << cmd << " > ${rootdir}/log/build_" << r->name << ".txt || exit 1" << endl;
+                }
 #endif
         }
 
